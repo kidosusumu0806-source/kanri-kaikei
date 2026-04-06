@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>管理会計ダッシュボード — 中小企業向けAI財務管理システム</title>
+<meta name="description" content="CSVを貼り付けるだけで製品別採算・PL・BS・CFが自動生成。AI財務アドバイザーが経営判断をサポート。14日間無料トライアル。"/>
+<meta property="og:title" content="管理会計ダッシュボード"/>
+<meta property="og:description" content="SAPなしで本格的な管理会計を実現。中小企業向けAI財務管理システム。"/>
+<meta property="og:type" content="website"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0B1628;--bgM:#111F35;--bgL:#172640;--bgLL:#1D2F4A;
+  --b:rgba(148,196,255,0.08);--bM:rgba(148,196,255,0.14);
+  --teal:#00D4A8;--tD:rgba(0,212,168,0.11);--tB:rgba(0,212,168,0.28);
+  --amber:#F5A623;--red:#FF6B6B;--blue:#5B9EFF;--purple:#A78BFA;
+  --tx:#E8F0FF;--txM:rgba(232,240,255,0.6);--txD:rgba(232,240,255,0.35);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.7}
+.mono{font-family:'DM Mono',monospace}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--b);padding:.85rem 2rem;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--tx)}
+.logo-icon{width:32px;height:32px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700;flex-shrink:0}
+.logo-text{font-size:14px;font-weight:500}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-link{font-size:13px;color:var(--txM);text-decoration:none;transition:color .15s}
+.nav-link:hover{color:var(--tx)}
+.nav-cta{background:var(--teal);color:var(--bg);border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;text-decoration:none;transition:opacity .15s}
+.nav-cta:hover{opacity:.88}
+
+/* HERO */
+.hero{padding:5rem 2rem 4rem;text-align:center;max-width:820px;margin:0 auto}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--tD);border:1px solid var(--tB);border-radius:20px;padding:4px 14px;font-size:12px;color:var(--teal);margin-bottom:1.5rem}
+h1{font-size:clamp(28px,4vw,42px);font-weight:500;line-height:1.25;margin-bottom:1rem;letter-spacing:-.02em}
+h1 em{color:var(--teal);font-style:normal}
+.hero-sub{font-size:16px;color:var(--txM);margin-bottom:2rem;line-height:1.85}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:.75rem}
+.btn-primary{background:var(--teal);color:var(--bg);border:none;padding:13px 30px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;text-decoration:none;transition:opacity .15s}
+.btn-primary:hover{opacity:.88}
+.btn-outline{background:transparent;color:var(--txM);border:1px solid var(--bM);padding:13px 30px;border-radius:10px;font-size:15px;cursor:pointer;font-family:inherit;text-decoration:none;transition:all .15s}
+.btn-outline:hover{color:var(--tx);border-color:rgba(148,196,255,0.3)}
+.trial-note{font-size:12px;color:var(--txD)}
+
+/* SCREEN MOCK */
+.mock{background:var(--bgL);border:1px solid var(--bM);border-radius:12px;padding:1.25rem;margin-top:2.5rem;text-align:left}
+.mock-header{display:flex;gap:6px;align-items:center;margin-bottom:14px}
+.mock-dot{width:9px;height:9px;border-radius:50%}
+.mock-title{font-size:11px;color:var(--txD);margin-left:8px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:var(--bgLL);border-radius:7px;padding:8px 10px}
+.kpi-label{font-size:9px;color:var(--txD);margin-bottom:2px}
+.kpi-val{font-size:15px;font-weight:500;font-family:'DM Mono',monospace}
+.mock-table{width:100%;border-collapse:collapse;font-size:12px}
+.mock-table td{padding:6px 0;border-bottom:1px solid var(--b)}
+.mock-table td:last-child{text-align:right}
+
+/* STATS */
+.stats{background:var(--bgM);border-top:1px solid var(--b);border-bottom:1px solid var(--b);padding:2.5rem 2rem;display:flex;gap:0;justify-content:center}
+.stat{text-align:center;padding:0 3rem;border-right:1px solid var(--b)}
+.stat:last-child{border-right:none}
+.stat-num{font-size:34px;font-weight:500;color:var(--teal);font-family:'DM Mono',monospace}
+.stat-label{font-size:12px;color:var(--txD);margin-top:4px}
+
+/* SECTIONS */
+section{padding:4rem 2rem;max-width:980px;margin:0 auto}
+.section-label{font-size:11px;font-weight:500;color:var(--teal);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+h2{font-size:clamp(22px,3vw,30px);font-weight:500;margin-bottom:.85rem;letter-spacing:-.01em}
+h2 em{color:var(--teal);font-style:normal}
+.body-text{font-size:14px;color:var(--txM);line-height:1.85}
+.divider{height:1px;background:var(--b)}
+
+/* FEATURES */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:2rem}
+.feat{background:var(--bgM);border:1px solid var(--b);border-radius:12px;padding:1.25rem;transition:border-color .15s}
+.feat:hover{border-color:var(--bM)}
+.feat-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+.feat-title{font-size:14px;font-weight:500;margin-bottom:6px}
+.feat-desc{font-size:12px;color:var(--txD);line-height:1.75}
+
+/* PRICING */
+.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:2rem}
+.plan{background:var(--bgM);border:1px solid var(--b);border-radius:14px;padding:1.5rem;position:relative;transition:border-color .2s}
+.plan.featured{border-color:rgba(0,212,168,.4)}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--teal);color:var(--bg);font-size:11px;font-weight:500;padding:3px 14px;border-radius:20px;white-space:nowrap}
+.plan-name{font-size:13px;font-weight:500;margin-bottom:4px}
+.plan-price{font-size:30px;font-weight:500;font-family:'DM Mono',monospace;margin:10px 0 4px}
+.plan-period{font-size:12px;color:var(--txD);margin-bottom:16px}
+.plan-divider{height:1px;background:var(--b);margin:16px 0}
+.plan-feature{font-size:12px;color:var(--txM);padding:4px 0;display:flex;align-items:flex-start;gap:8px}
+.check{color:var(--teal);flex-shrink:0;font-weight:500}
+.cross{color:rgba(232,240,255,.18);flex-shrink:0}
+.plan-btn{display:block;width:100%;padding:10px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;margin-top:20px;font-family:inherit;text-align:center;text-decoration:none;transition:all .15s}
+.plan-btn.primary{background:var(--teal);color:var(--bg);border:none}
+.plan-btn.primary:hover{opacity:.88}
+.plan-btn.outline{background:transparent;border:1px solid var(--bM);color:var(--txM)}
+.plan-btn.outline:hover{border-color:rgba(148,196,255,.3);color:var(--tx)}
+
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--b)}
+.faq-item summary{padding:16px 0;font-size:14px;font-weight:500;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.faq-item summary::after{content:'+';color:var(--txD);font-size:18px;flex-shrink:0;transition:transform .2s}
+.faq-item[open] summary::after{content:'−'}
+.faq-item p{font-size:13px;color:var(--txM);line-height:1.85;padding-bottom:16px}
+
+/* CHECKLIST */
+.checklists{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:2rem}
+.check-group{background:var(--bgM);border:1px solid var(--b);border-radius:12px;padding:1.25rem}
+.check-group-title{font-size:13px;font-weight:500;margin-bottom:12px}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(148,196,255,.05);cursor:pointer;user-select:none}
+.check-item:last-child{border-bottom:none}
+.check-box{width:17px;height:17px;border-radius:4px;border:1px solid var(--bM);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;transition:all .15s}
+.check-box.done{background:var(--teal);border-color:var(--teal);color:var(--bg)}
+.check-text{font-size:12px;color:var(--txM);line-height:1.55;transition:color .15s}
+.check-text.done{color:var(--txD);text-decoration:line-through}
+.progress-bar{height:5px;background:rgba(148,196,255,.08);border-radius:3px;overflow:hidden;margin-top:12px}
+.progress-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .4s ease;width:0%}
+
+/* CTA SECTION */
+.cta-section{text-align:center;padding:5rem 2rem;background:var(--bgM);border-top:1px solid var(--b);border-bottom:1px solid var(--b)}
+
+/* FOOTER */
+footer{padding:2.5rem 2rem;text-align:center;color:var(--txD);font-size:12px;line-height:2}
+footer a{color:var(--txM);text-decoration:none}
+footer a:hover{color:var(--tx)}
+
+/* RESPONSIVE */
+@media(max-width:700px){
+  .features,.pricing,.checklists,.stats{grid-template-columns:1fr}
+  .stat{border-right:none;border-bottom:1px solid var(--b);padding:1rem}
+  .stat:last-child{border-bottom:none}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  nav .nav-links{gap:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-icon">⚡</div>
+    <span class="logo-text">管理会計ダッシュボード</span>
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="#features">機能</a>
+    <a class="nav-link" href="#pricing">料金</a>
+    <a class="nav-link" href="#faq">FAQ</a>
+    <a class="nav-cta" href="/signup">無料で始める</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">⚡ AI搭載 · 管理会計 · 財務諸表一式</div>
+  <h1>SAPなしで<em>本格的な</em><br>管理会計を実現する</h1>
+  <p class="hero-sub">CSVを貼り付けるだけで製品別採算・PL・BS・CFが自動生成。<br>AI財務アドバイザーが黒字化・コスト削減をサポートします。</p>
+  <div class="hero-btns">
+    <a class="btn-primary" href="/signup">14日間無料で試す</a>
+    <a class="btn-outline" href="/demo">デモを見る</a>
+  </div>
+  <p class="trial-note">クレジットカード不要 · 14日後に自動課金 · いつでもキャンセル可</p>
+
+  <div class="mock">
+    <div class="mock-header">
+      <div class="mock-dot" style="background:#FF6B6B"></div>
+      <div class="mock-dot" style="background:#F5A623"></div>
+      <div class="mock-dot" style="background:#00D4A8"></div>
+      <span class="mock-title">管理会計ダッシュボード — 本社 · 2024年4月</span>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">売上高</div><div class="kpi-val" style="color:var(--teal)">¥48.2M</div></div>
+      <div class="kpi"><div class="kpi-label">限界利益率</div><div class="kpi-val" style="color:var(--teal)">38.4%</div></div>
+      <div class="kpi"><div class="kpi-label">営業利益</div><div class="kpi-val" style="color:var(--teal)">¥5.6M</div></div>
+      <div class="kpi"><div class="kpi-label">BEP比率</div><div class="kpi-val" style="color:var(--amber)">78.3%</div></div>
+    </div>
+    <table class="mock-table">
+      <tr><td>製品A 限界利益率</td><td style="color:var(--teal)">44.9% ✓ 優良</td></tr>
+      <tr><td>製品B 限界利益率</td><td style="color:var(--amber)">33.3% 要注意</td></tr>
+      <tr><td>製品C 限界利益率</td><td style="color:var(--red)">19.3% 撤退検討</td></tr>
+      <tr style="border-bottom:none"><td>製品D 限界利益率</td><td style="color:var(--teal)">66.0% ✓ 優良</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-num">3</div><div class="stat-label">財務諸表を自動生成（PL/BS/CF）</div></div>
+  <div class="stat"><div class="stat-num">∞</div><div class="stat-label">AI財務相談（スタンダード以上）</div></div>
+  <div class="stat"><div class="stat-num">14</div><div class="stat-label">日間 無料トライアル</div></div>
+  <div class="stat"><div class="stat-num">5分</div><div class="stat-label">でセットアップ完了</div></div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">機能</div>
+  <h2>経理担当者でなくても<br><em>使いこなせる</em>設計</h2>
+  <p class="body-text">会計ソフトのCSVをそのまま貼り付けるだけ。複雑な設定は不要です。</p>
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(0,212,168,.12)">📊</div>
+      <div class="feat-title">直接原価計算・製品別採算</div>
+      <div class="feat-desc">製品ごとに限界利益・貢献利益・損益分岐点を自動計算。「撤退すべき製品」を一目で判定できます。</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(91,158,255,.12)">📋</div>
+      <div class="feat-title">PL・BS・CF 自動生成</div>
+      <div class="feat-desc">損益計算書・貸借対照表・キャッシュフロー計算書を数字クリックで直接編集。印刷・PDF対応。</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(167,139,250,.12)">⚡</div>
+      <div class="feat-title">AI財務アドバイザー</div>
+      <div class="feat-desc">SAP CO-PA/CO-PC歴10年・MBA取得ベースの専門AIが財務データを横断分析し、改善策を提案します。</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(245,166,35,.12)">📄</div>
+      <div class="feat-title">領収書OCR自動取込</div>
+      <div class="feat-desc">写真・PDFをアップロードするだけで日付・金額・費目を自動読み取り。仕訳帳に自動登録します。</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(0,212,168,.12)">🏭</div>
+      <div class="feat-title">多拠点・事業部対応</div>
+      <div class="feat-desc">本社・大阪支社・製造部門など、複数拠点のデータを切り替えて管理。期間別のトレンド分析も対応。</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(91,158,255,.12)">📅</div>
+      <div class="feat-title">月次比較・Excel出力</div>
+      <div class="feat-desc">月次損益推移表をAIが自動分析しコメントを生成。採算表をxlsx形式でワンクリック出力。</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(245,166,35,.12)">⚙️</div>
+      <div class="feat-title">費目分類 AI自動判定</div>
+      <div class="feat-desc">費目名からAIが固定費・変動費・準変動費を自動判定。準変動費は固定率をスライダーで細かく設定できます。</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(167,139,250,.12)">🧾</div>
+      <div class="feat-title">税務サマリー</div>
+      <div class="feat-desc">別表四（法人税の所得計算）・消費税計算を自動化。AI税務アドバイスで節税ポイントを把握できます。</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(0,212,168,.12)">🔐</div>
+      <div class="feat-title">マルチテナント・セキュア</div>
+      <div class="feat-desc">Supabase Row Level Securityにより他社のデータが見えることは絶対にありません。チームで安全に利用できます。</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-label">料金</div>
+  <h2>シンプルな料金プラン</h2>
+  <p class="body-text">スタンダード・プロは14日間の無料トライアル付き。クレジットカード情報はトライアル開始時に必要です。</p>
+  <div class="pricing">
+    <div class="plan">
+      <div class="plan-name" style="color:var(--blue)">スターター</div>
+      <div class="plan-price">¥0</div>
+      <div class="plan-period">無料でずっと使える</div>
+      <div class="plan-divider"></div>
+      <div class="plan-feature"><span class="check">✓</span>1拠点</div>
+      <div class="plan-feature"><span class="check">✓</span>製品3つまで</div>
+      <div class="plan-feature"><span class="check">✓</span>AI相談 月5回</div>
+      <div class="plan-feature"><span class="check">✓</span>PL・BS・CF閲覧</div>
+      <div class="plan-feature"><span class="check">✓</span>領収書OCR（月10件）</div>
+      <div class="plan-feature"><span class="cross">✗</span>Excel出力</div>
+      <div class="plan-feature"><span class="cross">✗</span>複数ユーザー招待</div>
+      <a class="plan-btn outline" href="/signup">無料で始める</a>
+    </div>
+    <div class="plan featured">
+      <div class="plan-badge">おすすめ</div>
+      <div class="plan-name" style="color:var(--teal)">スタンダード</div>
+      <div class="plan-price" style="color:var(--teal)">¥9,800</div>
+      <div class="plan-period">/ 月 · 14日間無料トライアル</div>
+      <div class="plan-divider"></div>
+      <div class="plan-feature"><span class="check">✓</span>10拠点</div>
+      <div class="plan-feature"><span class="check">✓</span>製品50まで</div>
+      <div class="plan-feature"><span class="check">✓</span>AI相談 無制限</div>
+      <div class="plan-feature"><span class="check">✓</span>Excel出力</div>
+      <div class="plan-feature"><span class="check">✓</span>複数ユーザー招待</div>
+      <div class="plan-feature"><span class="check">✓</span>領収書OCR 無制限</div>
+      <div class="plan-feature"><span class="check">✓</span>優先メールサポート</div>
+      <a class="plan-btn primary" href="/signup?plan=standard">スタンダードを始める</a>
+    </div>
+    <div class="plan">
+      <div class="plan-name" style="color:var(--purple)">プロ</div>
+      <div class="plan-price" style="color:var(--purple)">¥29,800</div>
+      <div class="plan-period">/ 月 · 14日間無料トライアル</div>
+      <div class="plan-divider"></div>
+      <div class="plan-feature"><span class="check">✓</span>拠点・製品 無制限</div>
+      <div class="plan-feature"><span class="check">✓</span>AI相談 無制限</div>
+      <div class="plan-feature"><span class="check">✓</span>Excel出力</div>
+      <div class="plan-feature"><span class="check">✓</span>複数ユーザー招待</div>
+      <div class="plan-feature"><span class="check">✓</span>領収書OCR 無制限</div>
+      <div class="plan-feature"><span class="check">✓</span>API連携（将来対応）</div>
+      <div class="plan-feature"><span class="check">✓</span>専任サポート担当</div>
+      <a class="plan-btn outline" style="border-color:rgba(167,139,250,.3);color:var(--purple)" href="/signup?plan=pro">プロを始める</a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CHECKLIST -->
+<section id="checklist">
+  <div class="section-label">本番リリース前チェックリスト</div>
+  <h2>リリース準備を<em>確認</em>する</h2>
+  <p class="body-text">全項目をチェックしてから本番公開しましょう。クリックで完了マークをつけられます。</p>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-top:1.5rem;margin-bottom:1rem">
+    <span style="font-size:13px;color:var(--txD)">完了: <span id="done-count" style="color:var(--teal);font-family:'DM Mono',monospace">0</span> / <span id="total-count" style="font-family:'DM Mono',monospace">0</span></span>
+    <div style="flex:1;max-width:280px"><div class="progress-bar"><div class="progress-fill" id="main-progress"></div></div></div>
+  </div>
+
+  <div class="checklists" id="checklist-container"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="section-label">よくある質問</div>
+  <h2>疑問を解消する</h2>
+  <div id="faq-container" style="margin-top:1.5rem"></div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2 style="margin-bottom:.75rem">今すぐ<em>無料</em>で始める</h2>
+  <p style="font-size:14px;color:var(--txM);margin-bottom:1.5rem">14日間のトライアルで全機能をお試しください。クレジットカード不要。</p>
+  <a class="btn-primary" href="/signup" style="font-size:15px;padding:14px 36px">無料トライアルを開始する</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div style="margin-bottom:6px">
+    <a href="/privacy">プライバシーポリシー</a> &nbsp;·&nbsp;
+    <a href="/tokusho">特定商取引法に基づく表示</a> &nbsp;·&nbsp;
+    <a href="/terms">利用規約</a>
+  </div>
+  <div>© 2024 管理会計ダッシュボード &nbsp;·&nbsp; お問い合わせ: <a href="mailto:support@kanri-kaikei.jp">support@kanri-kaikei.jp</a></div>
+</footer>
+
+<script>
+const CHECKLIST_DATA = [
+  {
+    title: "🔐 セキュリティ",
+    items: [
+      "Supabase RLSが全テーブルに有効になっている",
+      "APIキーが環境変数に設定され、フロントに露出していない",
+      "Stripe Webhookの署名検証が動作している",
+      "HTTPS（Vercelデフォルト）を確認",
+      "Supabase Service Role KeyがCIに漏れていない",
+    ]
+  },
+  {
+    title: "💳 決済・法務",
+    items: [
+      "Stripeをライブモードに切り替えた（sk_live_）",
+      "本番用Webhookエンドポイントを登録した",
+      "特定商取引法に基づく表示ページを作成した",
+      "プライバシーポリシーを作成・公開した",
+      "利用規約を作成・公開した",
+      "テストカードで購入→解約フローを確認した",
+    ]
+  },
+  {
+    title: "🚀 インフラ",
+    items: [
+      "Vercel本番環境の環境変数をすべて設定した",
+      "カスタムドメインを設定した",
+      "Supabase東京リージョンで稼働確認",
+      "003_stripe.sqlマイグレーションを本番に適用",
+      "Anthropic APIのレート制限を確認した",
+    ]
+  },
+  {
+    title: "📋 コンテンツ・UX",
+    items: [
+      "ランディングページの本番URLを確認",
+      "お問い合わせメールアドレスを設定",
+      "スマートフォンでの表示を確認",
+      "Stripeカスタマーポータルにロゴを設定",
+      "メール確認・パスワードリセットの文面を確認",
+      "Vercel Analyticsを有効化した",
+    ]
+  },
+];
+
+const FAQ_DATA = [
+  { q: "SAPがなくても使えますか？", a: "はい、本製品はSAPを持たない中小企業向けに設計されています。弥生・マネーフォワード・freeeのCSVをそのまま貼り付けるだけで管理会計の分析ができます。" },
+  { q: "データはどこに保存されますか？", a: "Supabase（東京リージョン）に暗号化して保存されます。Row Level Securityにより、他社のデータが見えることは絶対にありません。" },
+  { q: "トライアル中に解約すれば費用はかかりませんか？", a: "はい、14日間のトライアル中にキャンセルすれば一切費用は発生しません。カスタマーポータルからいつでも解約できます。" },
+  { q: "複数人で使えますか？", a: "スタンダード・プロプランではチームメンバーを招待できます。スターターは1ユーザーのみです。" },
+  { q: "領収書OCRの精度はどのくらいですか？", a: "Claude Vision APIを使用しており、日本語の一般的な領収書・レシートで高い精度を発揮します。読み取り後に手動修正も可能です。" },
+  { q: "請求書（インボイス）は発行できますか？", a: "Stripeのカスタマーポータルから月次の請求書PDFをダウンロードできます。適格請求書（インボイス）対応は近日予定しています。" },
+];
+
+// Checklist
+const state = {};
+let totalItems = 0;
+const container = document.getElementById('checklist-container');
+
+CHECKLIST_DATA.forEach((group, gi) => {
+  const card = document.createElement('div');
+  card.className = 'check-group';
+
+  const title = document.createElement('div');
+  title.className = 'check-group-title';
+  title.innerHTML = `${group.title} <span style="font-size:11px;color:var(--txD);font-family:'DM Mono',monospace" id="cnt-${gi}">0/${group.items.length}</span>`;
+  card.appendChild(title);
+
+  group.items.forEach((item, ii) => {
+    const key = `${gi}-${ii}`;
+    state[key] = false;
+    totalItems++;
+
+    const row = document.createElement('div');
+    row.className = 'check-item';
+    row.innerHTML = `<div class="check-box" id="box-${key}"></div><div class="check-text" id="txt-${key}">${item}</div>`;
+    row.onclick = () => {
+      state[key] = !state[key];
+      const box = document.getElementById('box-'+key);
+      const txt = document.getElementById('txt-'+key);
+      box.className = 'check-box' + (state[key] ? ' done' : '');
+      box.textContent = state[key] ? '✓' : '';
+      txt.className = 'check-text' + (state[key] ? ' done' : '');
+
+      const groupDone = group.items.filter((_,j) => state[`${gi}-${j}`]).length;
+      document.getElementById('cnt-'+gi).textContent = `${groupDone}/${group.items.length}`;
+      document.getElementById('pb-'+gi).style.width = `${Math.round(groupDone/group.items.length*100)}%`;
+
+      const total = Object.values(state).filter(Boolean).length;
+      document.getElementById('done-count').textContent = total;
+      document.getElementById('main-progress').style.width = `${Math.round(total/totalItems*100)}%`;
+    };
+    card.appendChild(row);
+  });
+
+  const pb = document.createElement('div');
+  pb.className = 'progress-bar';
+  pb.innerHTML = `<div class="progress-fill" id="pb-${gi}"></div>`;
+  card.appendChild(pb);
+  container.appendChild(card);
+});
+
+document.getElementById('total-count').textContent = totalItems;
+
+// FAQ
+const faqContainer = document.getElementById('faq-container');
+FAQ_DATA.forEach(({ q, a }) => {
+  const details = document.createElement('details');
+  details.className = 'faq-item';
+  details.innerHTML = `<summary>${q}</summary><p>${a}</p>`;
+  faqContainer.appendChild(details);
+});
+</script>
+</body>
+</html>
