@@ -384,8 +384,8 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
 
   // ローカルstateで即時反映（非同期のonChangeを待たない）
   const [localCosts, setLocalCosts] = useState(costs);
-  // costsプロップが期間切替などで外から変わったときだけ同期
-  const costsKey = costs.length + "_" + (costs[0]?.費目||"");
+  // costsプロップが期間切替や仕訳帳同期で外から変わったときに同期
+  const costsKey = JSON.stringify(costs.map(c => c.費目 + ":" + c.金額));
   const prevKeyRef = useState(costsKey);
   if (prevKeyRef[0] !== costsKey) {
     prevKeyRef[0] = costsKey;
