@@ -155,7 +155,6 @@ export default function App() {
           {computed && (
             <div style={{ display:"flex", gap:8 }} className="hide-sm">
               <button onClick={handleExcel} style={{ background:"transparent", border:`1px solid ${C.bM}`, borderRadius:7, padding:"5px 12px", fontSize:12, color:C.txM, cursor:"pointer" }}>📊 Excel</button>
-              <button onClick={() => window.print()} style={{ background:"transparent", border:`1px solid ${C.bM}`, borderRadius:7, padding:"5px 12px", fontSize:12, color:C.txM, cursor:"pointer" }}>🖨</button>
             </div>
           )}
         </div>
