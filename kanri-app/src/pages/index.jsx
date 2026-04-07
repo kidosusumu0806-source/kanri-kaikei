@@ -269,7 +269,7 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
   // OCRフィルター（仕訳帳月別）
   const journalMonths = ["all", ...Array.from(new Set((journals||[]).map(e => e.date?.slice(0,7)).filter(Boolean))).sort().reverse()];
   const [monthFilter, setMonthFilter] = useState("all");
-  const visibleCosts = costs.filter(c => {
+  const visibleCosts = costsWithId.filter(c => {
     if (!c._fromOCR) return true;
     if (monthFilter === "all") return true;
     return c._date?.startsWith(monthFilter);
@@ -310,7 +310,10 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
     setAiLoading(false);
   };
 
-  const upd = (i, field, val) => { const n=[...costs]; n[i]={...n[i],[field]:val}; onChange(n); };
+  // costs にIDを付与（なければ付ける）
+  const costsWithId = costs.map((c, i) => c._id ? c : { ...c, _id: `cost_${i}_${c.費目}` });
+  const updById = (id, field, val) => onChange(costsWithId.map(c => c._id === id ? { ...c, [field]: val } : c));
+  const delById = (id) => onChange(costsWithId.filter(c => c._id !== id));
 
   const totalByType = type => costs.filter(c=>c._type===type).reduce((a,c)=>a+N(c.金額),0);
 
@@ -368,23 +371,22 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
                 {journalMonths.map(m => <option key={m} value={m}>{m==="all"?"全期間OCR":m}</option>)}
               </select>
             )}
-            <Btn sm onClick={()=>onChange([...costs,{ 費目:"新規費目", 金額:0, _type:"固定費", 固定率:100 }])}>＋ 追加</Btn>
+            <Btn sm onClick={()=>onChange([...costsWithId,{ 費目:"新規費目", 金額:0, _type:"固定費", 固定率:100, _id:`cost_new_${Date.now()}` }])}>＋ 追加</Btn>
           </div>
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
           {visibleCosts.map((c) => {
-            const i = costs.indexOf(c);
             const t = TYPE_META[c._type] || TYPE_META["固定費"];
             return (
-              <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:C.bgL, borderRadius:8, border:`1px solid ${C.b}` }}>
+              <div key={c._id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:C.bgL, borderRadius:8, border:`1px solid ${C.b}` }}>
                 <div style={{ width:3, height:32, borderRadius:2, background:t.color, flexShrink:0 }}/>
-                <input value={c.費目} onChange={e=>upd(i,"費目",e.target.value)}
+                <input value={c.費目} onChange={e=>updById(c._id,"費目",e.target.value)}
                   style={{ flex:1, background:"transparent", border:"none", outline:"none", fontSize:13, color:C.tx, minWidth:0 }}/>
-                <input value={c.金額} onChange={e=>upd(i,"金額",e.target.value)}
+                <input value={c.金額} onChange={e=>updById(c._id,"金額",e.target.value)}
                   style={{ width:110, background:C.bgLL, border:`1px solid ${C.b}`, borderRadius:6, padding:"4px 8px", fontSize:12, color:C.tx, outline:"none", textAlign:"right", fontFamily:M }}/>
                 <div style={{ display:"flex", gap:3 }}>
                   {Object.entries(TYPE_META).map(([type,meta]) => (
-                    <button key={type} onClick={()=>upd(i,"_type",type)} style={{
+                    <button key={type} onClick={()=>updById(c._id,"_type",type)} style={{
                       padding:"3px 9px", borderRadius:20, fontSize:11, cursor:"pointer", border:"none",
                       background:c._type===type?meta.color+"33":C.bgLL,
                       color:c._type===type?meta.color:C.txD,
@@ -394,12 +396,12 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
                 </div>
                 {c._type==="準変動費" && (
                   <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                    <input type="range" min={0} max={100} step={5} value={c.固定率??60} onChange={e=>upd(i,"固定率",parseInt(e.target.value))}
+                    <input type="range" min={0} max={100} step={5} value={c.固定率??60} onChange={e=>updById(c._id,"固定率",parseInt(e.target.value))}
                       style={{ width:70, accentColor:C.amber }}/>
                     <span className="mono" style={{ fontSize:11, color:C.amber, minWidth:32 }}>{c.固定率??60}%固定</span>
                   </div>
                 )}
-                <button onClick={()=>onChange(costs.filter((_,j)=>j!==i))} style={{ background:"none", border:"none", color:C.txD, cursor:"pointer", fontSize:14, padding:"2px 6px" }}>✕</button>
+                <button onClick={()=>delById(c._id)} style={{ background:"none", border:"none", color:C.txD, cursor:"pointer", fontSize:14, padding:"2px 6px" }}>✕</button>
               </div>
             );
           })}
