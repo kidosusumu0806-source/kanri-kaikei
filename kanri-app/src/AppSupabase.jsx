@@ -126,9 +126,10 @@ export default function AppSupabase() {
     );
     if (!c) { alert("CSVデータを取り込んでから計算してください"); return; }
     setComputed(c);
+
     store.showSaved("計算完了 ✓");
     setTab("dashboard");
-  }, [store.currentPD, pendingUpdates]);
+  }, [store.currentPD, store.statements, pendingUpdates]);
 
   // ─── 拠点切替 ────────────────────────────────────────────
   const handleLocChange = useCallback((locId) => {
@@ -348,6 +349,8 @@ export default function AppSupabase() {
             <PLStatement
               stored={store.statements.pl}
               onSave={d => store.saveStatement("pl", d)}
+              computed={computed}
+              costs={store.currentPD?.costs || DEF_COSTS}
             />
           )}
 

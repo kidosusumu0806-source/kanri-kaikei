@@ -493,7 +493,7 @@ export function Journal({ entries, setEntries }) {
 // ═══════════════════════════════════════════════════════════════════════════
 const PL_INIT = { 売上高:48200000, 売上原価:29700000, sga:[{ label:"人件費",v:7200000 },{ label:"地代家賃",v:1800000 },{ label:"減価償却費",v:2100000 },{ label:"水道光熱費",v:950000 },{ label:"その他販管費",v:1200000 }], 営業外収益:120000, 支払利息:280000, 特別利益:0, 特別損失:0, 法人税等:1450000 };
 
-export function PLStatement({ stored, onSave }) {
+export function PLStatement({ stored, onSave, computed, costs }) {
   const [pl, setPL] = useState(stored || PL_INIT);
   const [showPct, setShowPct] = useState(true);
   const gross = pl.売上高 - pl.売上原価;
@@ -514,6 +514,36 @@ export function PLStatement({ stored, onSave }) {
 
   return (
     <div className="fade">
+      {computed && (
+        <div style={{ background:"rgba(0,212,168,0.08)", border:"1px solid rgba(0,212,168,0.25)", borderRadius:8, padding:"10px 14px", marginBottom:12, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+          <div>
+            <div style={{ fontSize:12, color:"#00D4A8", fontWeight:500, marginBottom:3 }}>⚡ 採算計算結果あり</div>
+            <div style={{ fontSize:11, color:"rgba(232,240,255,0.5)" }}>
+              売上高 {fmt(computed.totalRev)} ／ 売上原価（変動費）{fmt(computed.totalVC)} ／ 固定費 {fmt(computed.totalFixed)}
+            </div>
+          </div>
+          <button onClick={() => {
+            const sgaFromCosts = (costs||[])
+              .filter(r => r._type === "固定費" || r._type === "準変動費")
+              .map(r => ({
+                label: r.費目 || "その他",
+                v: r._type === "準変動費"
+                  ? Math.round(Number(r.金額||0) * (Number(r.固定率||60)/100))
+                  : Number(r.金額||0)
+              }))
+              .filter(r => r.v > 0);
+            if (!window.confirm("採算計算の結果をPLに取り込みますか？\n・売上高\n・売上原価（変動費合計）\n・販管費（固定費リスト）\n\n営業外損益・法人税等は変更されません。")) return;
+            setPL(p => ({
+              ...p,
+              売上高: Math.round(computed.totalRev),
+              売上原価: Math.round(computed.totalVC),
+              sga: sgaFromCosts.length > 0 ? sgaFromCosts : p.sga,
+            }));
+          }} style={{ background:"#00D4A8", color:"#0B1628", border:"none", borderRadius:7, padding:"7px 16px", fontSize:12, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0 }}>
+            採算結果を取り込む
+          </button>
+        </div>
+      )}
       <div style={{ display:"flex", gap:10, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
         <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:C.txM, cursor:"pointer" }}>
           <input type="checkbox" checked={showPct} onChange={e=>setShowPct(e.target.checked)} style={{ accentColor:C.teal }}/>売上高比（%）表示
