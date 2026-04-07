@@ -3,7 +3,7 @@
 // App.jsx (localStorage版) をそのまま置き換える。
 // 使用方法: main.jsx で import App from "./AppSupabase.jsx" に変更する。
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
 import { C, CSS } from "./tokens.js";
 import { computePeriod } from "./utils.js";
@@ -98,9 +98,20 @@ export default function AppSupabase() {
   }, [currentLocId, store.periodMap]);
 
   // ─── 期間データ更新（CSVや費目）──────────────────────────
+  // デバウンス用タイマー（1秒待ってからDB保存）
+  const saveTimer = useRef(null);
+  const pendingUpdates = useRef({});
+
   const updatePeriodField = useCallback((field, value) => {
-    // ローカルのcurrentPDを即時更新（楽観的UI）
-    store.savePeriodData(currentPeriodId, { [field]: value });
+    // ローカルキャッシュに即時反映
+    pendingUpdates.current[field] = value;
+    // 既存タイマーをリセット
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    // 1秒後にまとめてDB保存
+    saveTimer.current = setTimeout(() => {
+      store.savePeriodData(currentPeriodId, { ...pendingUpdates.current });
+      pendingUpdates.current = {};
+    }, 1000);
   }, [currentPeriodId, store.savePeriodData]);
 
   // ─── 採算計算実行 ─────────────────────────────────────────
@@ -280,6 +291,7 @@ export default function AppSupabase() {
               periodData={{
                 salesCSV: periodData.sales_csv || periodData.salesCSV || "",
                 budgetCSV: periodData.budget_csv || periodData.budgetCSV || "",
+                costs: periodData.costs || [],
               }}
               onUpdate={(field, value) => {
                 const dbField = field === "salesCSV" ? "sales_csv" : field === "budgetCSV" ? "budget_csv" : field;
@@ -287,6 +299,7 @@ export default function AppSupabase() {
               }}
               onCompute={handleCompute}
               onJournalAdd={store.addJournalEntries}
+              onCostsUpdate={(costs) => updatePeriodField("costs", costs)}
             />
           )}
 

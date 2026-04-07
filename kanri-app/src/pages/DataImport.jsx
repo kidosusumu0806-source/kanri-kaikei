@@ -196,7 +196,7 @@ function ReceiptUploader({ onExtracted }) {
 }
 
 // ─── Main DataImport page ─────────────────────────────────────────────────────
-export default function DataImport({ periodData, onUpdate, onCompute, onJournalAdd }) {
+export default function DataImport({ periodData, onUpdate, onCompute, onJournalAdd, onCostsUpdate }) {
   const [activeSection, setActiveSection] = useState("csv");
 
   const handleBulkImport = (mapped) => {
@@ -214,12 +214,29 @@ export default function DataImport({ periodData, onUpdate, onCompute, onJournalA
   };
 
   const handleReceiptExtracted = (results) => {
+    // 仕訳帳に追加
     const newEntries = results.map(r => ({
       id: uid(), date: r.date,
       debit: r.category || "その他費用", credit:"現金",
       amount: r.amount, description:`${r.vendor} ${r.content}`, ref: r.file,
     }));
     onJournalAdd(newEntries);
+
+    // 費目リスト（costs）にも追加してPL・採算に反映
+    if (onCostsUpdate && results.length > 0) {
+      const currentCosts = periodData?.costs || [];
+      const newCostItems = results
+        .filter(r => r.amount > 0)
+        .map(r => ({
+          費目: `${r.category || "その他"}（${r.vendor}）`,
+          金額: String(r.amount),
+          _type: "固定費",
+          固定率: 100,
+          _fromOCR: true,
+          _date: r.date,
+        }));
+      onCostsUpdate([...currentCosts, ...newCostItems]);
+    }
   };
 
   return (
