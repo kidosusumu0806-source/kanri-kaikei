@@ -273,13 +273,12 @@ export default function DataImport({ periodData, onUpdate, onCompute, onJournalA
             />
           </div>
           <div style={{ display:"flex", gap:10 }}>
-            <Btn primary onClick={onCompute}>▶ 計算を実行する</Btn>
             <Btn onClick={() => { onUpdate("salesCSV", DEF_SALES_CSV); onUpdate("budgetCSV", DEF_BUDGET_CSV); }}>
               サンプルデータ全読込
             </Btn>
           </div>
           <div style={{ marginTop:8, fontSize:11, color:C.txD }}>
-            ※ 費用（固定費・変動費）の設定は「費目分類設定」タブで行ってください
+            ※ 費用・領収書を取り込んだら、上部の「採算計算を実行する」ボタンを押してください
           </div>
         </div>
       )}
