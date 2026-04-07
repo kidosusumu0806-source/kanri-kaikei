@@ -115,17 +115,20 @@ export default function AppSupabase() {
 
   // ─── 採算計算実行 ─────────────────────────────────────────
   const handleCompute = useCallback(() => {
-    const pd = store.currentPD;
-    if (!pd) return;
+    // 常に最新のcurrentPDを参照（pendingUpdatesも含める）
+    const pd = store.currentPD || {};
+    const pending = pendingUpdates.current || {};
+    const merged = { ...pd, ...pending };
     const c = computePeriod(
-      pd.sales_csv || pd.salesCSV || DEF_SALES_CSV,
-      pd.costs || DEF_COSTS,
-      pd.budget_csv || pd.budgetCSV || DEF_BUDGET_CSV,
+      merged.sales_csv || merged.salesCSV || DEF_SALES_CSV,
+      merged.costs || DEF_COSTS,
+      merged.budget_csv || merged.budgetCSV || DEF_BUDGET_CSV,
     );
+    if (!c) { alert("CSVデータを取り込んでから計算してください"); return; }
     setComputed(c);
     store.showSaved("計算完了 ✓");
     setTab("dashboard");
-  }, [store.currentPD]);
+  }, [store.currentPD, pendingUpdates]);
 
   // ─── 拠点切替 ────────────────────────────────────────────
   const handleLocChange = useCallback((locId) => {
@@ -278,6 +281,20 @@ export default function AppSupabase() {
               <button onClick={() => window.print()} style={{ background:"transparent", border:`1px solid ${C.bM}`, borderRadius:7, padding:"5px 12px", fontSize:12, color:C.txM, cursor:"pointer" }}>🖨</button>
             </div>
           )}
+        </div>
+
+        {/* 計算実行ボタン（常時表示） */}
+        <div className="no-print" style={{ background:"#0F1F38", borderBottom:"1px solid rgba(148,196,255,0.08)", padding:"8px 20px", display:"flex", alignItems:"center", justifyContent:"flex-end", gap:10 }}>
+          <span style={{ fontSize:12, color:"rgba(232,240,255,0.4)" }}>
+            CSV・費目・OCRを取り込んだら：
+          </span>
+          <button onClick={handleCompute} style={{
+            background:"#00D4A8", color:"#0B1628", border:"none", borderRadius:8,
+            padding:"8px 20px", fontSize:13, fontWeight:700, cursor:"pointer",
+            display:"flex", alignItems:"center", gap:6,
+          }}>
+            ▶ 採算計算を実行する
+          </button>
         </div>
 
         {/* Content */}
