@@ -20,7 +20,7 @@ import {
 
 const TAB_LABELS = {
   dashboard:"ダッシュボード", import:"データ取込（CSV・領収書）", costs:"コスト管理",
-  journal:"仕訳帳", product:"製品別採算", budget:"予算対比", trend:"トレンド",
+  journal:"仕訳帳", product:"品目別採算", budget:"予算対比", trend:"トレンド",
   pl:"損益計算書（PL）", bs:"貸借対照表（BS）", cf:"CF計算書",
   monthly:"月次比較レポート", tax:"税務サマリー", ai:"AI財務アドバイザー",
 };
@@ -180,11 +180,11 @@ export default function AppSupabase() {
       ["損益分岐点比率", computed.bepRatio / 100],
     ]);
     XLSX.utils.book_append_sheet(wb, s1, "サマリー");
-    const prodHdr = ["製品CD","製品名","売上高","変動費","限界利益","限益率","配賦固定費","貢献利益","判定"];
+    const prodHdr = ["品目CD","品目名","売上高","変動費","限界利益","限益率","配賦固定費","貢献利益","判定"];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
       prodHdr,
       ...computed.products.map(p => [p.code,p.name,p.rev,p.varCost,p.cm,p.cmRate/100,p.fixedAlloc,p.contrib,p.status]),
-    ]), "製品別採算");
+    ]), "品目別採算");
     XLSX.writeFile(wb, `管理会計_${currentLocName}_${currentPeriodLabel}.xlsx`);
   }, [computed, currentLocName, currentPeriodLabel]);
 

@@ -15,7 +15,7 @@ export const PLANS = {
     multiUser:       false,
     features: [
       "1拠点",
-      "製品3つまで",
+      "品目3つまで",
       "AI相談 月5回",
       "PL・BS・CF閲覧",
     ],
@@ -33,7 +33,7 @@ export const PLANS = {
     trial:           14,
     features: [
       "10拠点",
-      "製品50まで",
+      "品目50まで",
       "AI相談 無制限",
       "Excel出力",
       "複数ユーザー招待",
@@ -53,7 +53,7 @@ export const PLANS = {
     multiUser:       true,
     trial:           14,
     features: [
-      "拠点・製品 無制限",
+      "拠点・品目 無制限",
       "AI相談 無制限",
       "Excel出力",
       "複数ユーザー招待",

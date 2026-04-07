@@ -260,14 +260,14 @@ export default function DataImport({ periodData, onUpdate, onCompute, onJournalA
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12 }} className="g2">
             <CSVZone
               label="売上・変動費 CSV"
-              hint={"必須列: 製品CD, 製品名, 売上高, 変動費, 直接労務費"}
+              hint={"必須列: 品目CD, 品目名, 売上高, 変動費, 直接労務費"}
               value={periodData?.salesCSV || ""}
               onChange={v => onUpdate("salesCSV", v)}
               sampleValue={DEF_SALES_CSV}
             />
             <CSVZone
               label="予算 CSV"
-              hint={"必須列: 製品CD, 予算売上高, 予算変動費率"}
+              hint={"必須列: 品目CD, 予算売上高, 予算変動費率"}
               value={periodData?.budgetCSV || ""}
               onChange={v => onUpdate("budgetCSV", v)}
               sampleValue={DEF_BUDGET_CSV}

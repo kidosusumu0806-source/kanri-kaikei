@@ -78,11 +78,11 @@ export function ProductPL({ computed }) {
   return (
     <div className="fade">
       <Card style={{ overflowX:"auto" }}>
-        <ST>製品別採算表（直接原価計算）</ST>
+        <ST>品目別採算表（直接原価計算）</ST>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12, minWidth:680 }}>
           <thead>
-            <tr>{["製品","売上高","変動費","限界利益","限益率","配賦固定費","貢献利益","判定"].map(h => (
-              <th key={h} style={{ padding:"8px 10px", textAlign:h==="製品"?"left":"right", fontSize:10, color:C.txD, fontWeight:500, borderBottom:`1px solid ${C.b}`, whiteSpace:"nowrap" }}>{h}</th>
+            <tr>{["品目","売上高","変動費","限界利益","限益率","配賦固定費","貢献利益","判定"].map(h => (
+              <th key={h} style={{ padding:"8px 10px", textAlign:h==="品目"?"left":"right", fontSize:10, color:C.txD, fontWeight:500, borderBottom:`1px solid ${C.b}`, whiteSpace:"nowrap" }}>{h}</th>
             ))}</tr>
           </thead>
           <tbody>
@@ -138,12 +138,12 @@ export function BudgetComparison({ computed }) {
   return (
     <div className="fade">
       <Card style={{ marginBottom:12 }}>
-        <ST>予算対比（製品別）</ST>
+        <ST>予算対比（品目別）</ST>
         <div style={{ overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12, minWidth:580 }}>
             <thead>
-              <tr>{["製品","予算売上","実績売上","売上差異","予算限益率","実績限益率","限益率差異"].map(h => (
-                <th key={h} style={{ padding:"8px 10px", textAlign:h==="製品"?"left":"right", fontSize:10, color:C.txD, fontWeight:500, borderBottom:`1px solid ${C.b}`, whiteSpace:"nowrap" }}>{h}</th>
+              <tr>{["品目","予算売上","実績売上","売上差異","予算限益率","実績限益率","限益率差異"].map(h => (
+                <th key={h} style={{ padding:"8px 10px", textAlign:h==="品目"?"left":"right", fontSize:10, color:C.txD, fontWeight:500, borderBottom:`1px solid ${C.b}`, whiteSpace:"nowrap" }}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
@@ -1050,7 +1050,7 @@ export function AIAdvisor({ computed, journals, period, loc }) {
   const ctx = computed ? `
 期間: ${period} 拠点: ${loc}
 売上高: ${fmt(computed.totalRev)} 限界利益率: ${pct(computed.cmRate)} 営業利益: ${fmt(computed.opProfit)} BEP比率: ${pct(computed.bepRatio)}
-製品別:
+品目別:
 ${computed.products.map(p=>`  ${p.name}: 売上${fmt(p.rev)} 限益率${pct(p.cmRate)} 貢献利益${fmt(p.contrib)} [${p.status}]`).join("\n")}
 仕訳件数: ${journals?.length||0}件
   `.trim() : "データ未取込";
@@ -1067,7 +1067,7 @@ ${computed.products.map(p=>`  ${p.name}: 売上${fmt(p.rev)} 限益率${pct(p.cm
         </div>
         <AIChat
           systemPrompt={`あなたはSAP CO-PA/CO-PC経験10年・MBA取得の管理会計・財務分析専門家です。以下のデータを基に、中小企業経営者向けに実践的・簡潔なアドバイスを日本語でしてください。数字を具体的に引用してください。\n\n${ctx}`}
-          suggestions={["赤字製品への対処法は？","限界利益率を改善するには？","固定費削減の優先順位は？","損益分岐点を下げる方法は？","財務健全性を総合評価して","キャッシュフロー改善策は？"]}
+          suggestions={["赤字品目への対処法は？","限界利益率を改善するには？","固定費削減の優先順位は？","損益分岐点を下げる方法は？","財務健全性を総合評価して","キャッシュフロー改善策は？"]}
         />
       </Card>
     </div>

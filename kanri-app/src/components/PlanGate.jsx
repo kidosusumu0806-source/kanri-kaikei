@@ -29,7 +29,7 @@ export function UpgradeBanner({ feature, orgId, userEmail, onClose }) {
     multi_user:    "複数ユーザー招待",
     ai:            "AI相談（無制限）",
     locations:     "複数拠点管理",
-    products:      "製品数の追加",
+    products:      "品目数の追加",
   };
 
   const handleUpgrade = async () => {
@@ -111,7 +111,7 @@ export function LimitWarning({ resource, current, max, plan, orgId, userEmail })
   if (dismissed || max === Infinity || current < max * 0.8) return null;
 
   const isOver = current >= max;
-  const LABELS = { locations: "拠点", products: "製品" };
+  const LABELS = { locations: "拠点", products: "品目" };
 
   return (
     <div style={{
@@ -159,7 +159,7 @@ export function SubscriptionStatus({ org, user, onManage, onUpgrade }) {
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         {[
           { label: "拠点", max: plan.maxLocations },
-          { label: "製品", max: plan.maxProducts },
+          { label: "品目", max: plan.maxProducts },
           { label: "AI相談/月", max: plan.maxAICalls === Infinity ? "∞" : plan.maxAICalls },
         ].map(item => (
           <div key={item.label} style={{ fontSize: 12 }}>

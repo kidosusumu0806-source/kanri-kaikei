@@ -9,7 +9,7 @@ const NAV = [
   { id:"import",     icon:"📁", label:"データ取込（CSV・領収書）" },
   { id:"costs",      icon:"⚙️", label:"コスト管理" },
   { id:"journal",    icon:"📒", label:"仕訳帳" },
-  { id:"product",    icon:"🏭", label:"製品別採算" },
+  { id:"product",    icon:"🏭", label:"品目別採算" },
   { id:"budget",     icon:"🎯", label:"予算対比" },
   { id:"trend",      icon:"📈", label:"トレンド" },
   { id:"pl",         icon:"📋", label:"損益計算書（PL）" },

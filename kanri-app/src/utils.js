@@ -73,12 +73,12 @@ export function computePeriod(salesCSV, costs = [], budgetCSV = "") {
     const vc = N(r.変動費) + N(r.直接労務費) + (totalRevAll > 0 ? extraVar * (rev / totalRevAll) : 0);
     const cm = rev - vc;
     const cmRate = rev > 0 ? (cm / rev) * 100 : 0;
-    const br = budget.find(b => b.製品CD === r.製品CD) || {};
+    const br = budget.find(b => b.品目CD === r.品目CD) || {};
     const bRev = N(br.予算売上高);
     const bVR = N(br.予算変動費率) / 100;
     const bCM = bRev * (1 - bVR);
     return {
-      code: r.製品CD, name: r.製品名, rev, varCost: vc, cm, cmRate,
+      code: r.品目CD, name: r.品目名, rev, varCost: vc, cm, cmRate,
       budRev: bRev, budCMRate: bRev > 0 ? (bCM / bRev) * 100 : 0,
       revDiff: rev - bRev,
       status: cmRate >= 40 ? "優良" : cmRate >= 25 ? "要注意" : "要改善",
