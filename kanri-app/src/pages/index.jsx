@@ -389,10 +389,15 @@ const TYPE_META = {
 
 export function CostClassifier({ costs, onChange, journals, currentPeriod, periods, onPeriodChange }) {
   const [csvOpen, setCsvOpen] = useState(false);
+  const [monthFilter, setMonthFilter] = useState("all");
+
+  // costs にIDを付与（なければ付ける）
+  const costsWithId = costs.map((c, i) => c._id ? c : { ...c, _id: `cost_${i}_${c.費目}` });
+  const updById = (id, field, val) => onChange(costsWithId.map(c => c._id === id ? { ...c, [field]: val } : c));
+  const delById = (id) => onChange(costsWithId.filter(c => c._id !== id));
 
   // OCRフィルター（仕訳帳月別）
   const journalMonths = ["all", ...Array.from(new Set((journals||[]).map(e => e.date?.slice(0,7)).filter(Boolean))).sort().reverse()];
-  const [monthFilter, setMonthFilter] = useState("all");
   const visibleCosts = costsWithId.filter(c => {
     if (!c._fromOCR) return true;
     if (monthFilter === "all") return true;
@@ -433,11 +438,6 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
     } catch { setLog("AI判定失敗。手動で設定してください。"); }
     setAiLoading(false);
   };
-
-  // costs にIDを付与（なければ付ける）
-  const costsWithId = costs.map((c, i) => c._id ? c : { ...c, _id: `cost_${i}_${c.費目}` });
-  const updById = (id, field, val) => onChange(costsWithId.map(c => c._id === id ? { ...c, [field]: val } : c));
-  const delById = (id) => onChange(costsWithId.filter(c => c._id !== id));
 
   const totalByType = type => costs.filter(c=>c._type===type).reduce((a,c)=>a+N(c.金額),0);
 
