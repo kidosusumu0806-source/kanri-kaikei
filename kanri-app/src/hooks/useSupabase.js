@@ -150,8 +150,8 @@ export function useAppState() {
       const current = pdCache.current[periodId] ?? {};
       const merged = { ...current, ...updates };
       await pdDB.upsert(periodId, {
-        sales_csv: merged.salesCSV,
-        budget_csv: merged.budgetCSV,
+        sales_csv: merged.salesCSV ?? merged.sales_csv,
+        budget_csv: merged.budgetCSV ?? merged.budget_csv,
         costs: merged.costs,
       });
       pdCache.current[periodId] = merged;
