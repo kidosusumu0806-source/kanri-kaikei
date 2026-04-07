@@ -11,54 +11,178 @@ import AIChat from "../components/AIChat.jsx";
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════
 export function Dashboard({ computed, prevComputed }) {
+  const downloadPDF = () => window.print();
+
   if (!computed) return (
-    <div className="fade" style={{ textAlign:"center", padding:"4rem", color:C.txD }}>
-      <div style={{ fontSize:40, marginBottom:12 }}>📊</div>
-      <div>「データ取込」タブからCSVを入力してください</div>
+    <div className="fade" style={{ textAlign:"center", padding:"5rem 2rem", color:C.txD }}>
+      <div style={{ fontSize:56, marginBottom:16, opacity:0.4 }}>📊</div>
+      <div style={{ fontSize:18, fontWeight:500, color:C.txM, marginBottom:8 }}>データがまだありません</div>
+      <div style={{ fontSize:13 }}>「データ取込」からCSVを貼り付けて「採算計算を実行する」を押してください</div>
     </div>
   );
+
   const { totalRev, totalVC, totalCM, totalFixed, opProfit, cmRate, bepRatio, products, fixedItems } = computed;
   const colors = [C.blue, C.teal, C.amber, C.red, C.purple];
+  const bep = totalFixed / (cmRate / 100);
+
+  // SVGウォーターフォール
+  const wfItems = [
+    { label:"売上高", v:totalRev, color:C.blue, type:"base" },
+    { label:"変動費", v:totalVC, color:C.red, type:"neg" },
+    { label:"限界利益", v:totalCM, color:C.teal, type:"base" },
+    { label:"固定費", v:totalFixed, color:C.amber, type:"neg" },
+    { label:"営業利益", v:Math.abs(opProfit), color:opProfit>=0?C.teal:C.red, type:"result" },
+  ];
+  const maxV = Math.max(...wfItems.map(i=>i.v));
+  const barH = 120;
+
+  // ドーナツチャート（BEP比率）
+  const r = 40, circ = 2*Math.PI*r;
+  const bepDash = (bepRatio/100)*circ;
+
   return (
     <div className="fade">
-      <div className="g4" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:14 }}>
-        <KPI label="売上高" value={fmt(totalRev)} trend={prevComputed ? totalRev - prevComputed.totalRev : undefined}/>
-        <KPI label="限界利益率" value={pct(cmRate)} color={cmRate>=35?C.teal:C.amber} sub={fmt(totalCM)} trend={prevComputed ? cmRate - prevComputed.cmRate : undefined}/>
-        <KPI label="営業利益" value={fmt(opProfit)} color={opProfit>=0?C.teal:C.red} sub={opProfit>=0?"黒字":"赤字"}/>
-        <KPI label="BEP比率" value={pct(bepRatio)} color={bepRatio<80?C.teal:C.amber} sub={`安全余裕率 ${pct(100-bepRatio)}`}/>
+      {/* PDF download button */}
+      <div className="no-print" style={{ display:"flex", justifyContent:"flex-end", marginBottom:10 }}>
+        <button onClick={downloadPDF} style={{ background:"transparent", border:`1px solid ${C.bM}`, color:C.txM, borderRadius:7, padding:"6px 14px", fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+          🖨 PDFダウンロード
+        </button>
       </div>
-      <div className="g2" style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr", gap:12 }}>
+
+      {/* KPI Cards - enhanced */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:12 }}>
+        {/* 売上高 */}
+        <div style={{ background:`linear-gradient(135deg, ${C.bgL}, ${C.bgM})`, border:`1px solid ${C.bM}`, borderRadius:12, padding:"16px 14px", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:-10, right:-10, width:60, height:60, borderRadius:"50%", background:C.blue+"15" }}/>
+          <div style={{ fontSize:10, color:C.txD, letterSpacing:"0.07em", marginBottom:6 }}>売上高</div>
+          <div className="mono" style={{ fontSize:20, fontWeight:500, color:C.tx }}>{fmt(totalRev,true)}</div>
+          {prevComputed && <div style={{ fontSize:10, color:totalRev>=prevComputed.totalRev?C.teal:C.red, marginTop:4 }}>
+            {totalRev>=prevComputed.totalRev?"↑":"↓"} {fmt(Math.abs(totalRev-prevComputed.totalRev),true)}
+          </div>}
+        </div>
+
+        {/* 限界利益率 */}
+        <div style={{ background:`linear-gradient(135deg, ${C.bgL}, ${C.bgM})`, border:`1px solid ${cmRate>=35?C.tB:C.aB}`, borderRadius:12, padding:"16px 14px", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:-10, right:-10, width:60, height:60, borderRadius:"50%", background:(cmRate>=35?C.teal:C.amber)+"15" }}/>
+          <div style={{ fontSize:10, color:C.txD, letterSpacing:"0.07em", marginBottom:6 }}>限界利益率</div>
+          <div className="mono" style={{ fontSize:20, fontWeight:500, color:cmRate>=35?C.teal:C.amber }}>{pct(cmRate)}</div>
+          <div style={{ marginTop:6, background:C.bgLL, borderRadius:3, height:3, overflow:"hidden" }}>
+            <div style={{ width:`${Math.min(cmRate,100)}%`, height:"100%", background:cmRate>=35?C.teal:C.amber, borderRadius:3, transition:"width .6s" }}/>
+          </div>
+          <div style={{ fontSize:10, color:C.txD, marginTop:3 }}>{fmt(totalCM,true)}</div>
+        </div>
+
+        {/* 営業利益 */}
+        <div style={{ background:`linear-gradient(135deg, ${C.bgL}, ${C.bgM})`, border:`1px solid ${opProfit>=0?C.tB:C.rB}`, borderRadius:12, padding:"16px 14px", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:-10, right:-10, width:60, height:60, borderRadius:"50%", background:(opProfit>=0?C.teal:C.red)+"15" }}/>
+          <div style={{ fontSize:10, color:C.txD, letterSpacing:"0.07em", marginBottom:6 }}>営業利益</div>
+          <div className="mono" style={{ fontSize:20, fontWeight:500, color:opProfit>=0?C.teal:C.red }}>{fmt(opProfit,true)}</div>
+          <div style={{ marginTop:6, fontSize:11, color:opProfit>=0?C.teal:C.red, fontWeight:500 }}>
+            {opProfit>=0?"● 黒字":"● 赤字"}
+          </div>
+        </div>
+
+        {/* BEP - ドーナツ */}
+        <div style={{ background:`linear-gradient(135deg, ${C.bgL}, ${C.bgM})`, border:`1px solid ${bepRatio<80?C.tB:C.aB}`, borderRadius:12, padding:"16px 14px", display:"flex", gap:10, alignItems:"center" }}>
+          <svg width={52} height={52} viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r={r} fill="none" stroke={C.bgLL} strokeWidth="14"/>
+            <circle cx="50" cy="50" r={r} fill="none" stroke={bepRatio<80?C.teal:C.amber} strokeWidth="14"
+              strokeDasharray={`${bepDash} ${circ-bepDash}`} strokeDashoffset={circ/4} strokeLinecap="round" style={{transition:"stroke-dasharray .8s"}}/>
+            <text x="50" y="55" textAnchor="middle" fill={bepRatio<80?C.teal:C.amber} fontSize="18" fontFamily="monospace" fontWeight="500">{Math.round(bepRatio)}</text>
+          </svg>
+          <div>
+            <div style={{ fontSize:10, color:C.txD, letterSpacing:"0.07em", marginBottom:3 }}>BEP比率</div>
+            <div className="mono" style={{ fontSize:13, color:bepRatio<80?C.teal:C.amber }}>{pct(bepRatio)}</div>
+            <div style={{ fontSize:10, color:C.txD, marginTop:2 }}>安全余裕率 {pct(100-bepRatio)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts row */}
+      <div style={{ display:"grid", gridTemplateColumns:"1.6fr 1fr", gap:10, marginBottom:10 }}>
+        {/* Waterfall - SVG */}
         <Card>
           <ST>利益ウォーターフォール</ST>
-          <Waterfall items={[
-            { label:"売上高", v:totalRev, color:C.blue+"88" },
-            { label:"変動費", v:totalVC, color:C.red+"66", neg:true },
-            { label:"限界利益", v:totalCM, color:C.teal+"77" },
-            { label:"固定費", v:totalFixed, color:C.amber+"66", neg:true },
-            { label:"営業利益", v:Math.abs(opProfit), color:opProfit>=0?C.teal:C.red },
-          ]}/>
+          <svg width="100%" viewBox="0 0 420 160" preserveAspectRatio="xMidYMid meet" style={{ marginTop:4 }}>
+            {wfItems.map((item, i) => {
+              const bw = 60, gap = 24, x = i*(bw+gap)+10;
+              const h = Math.max(4, (item.v/maxV)*barH);
+              const y = barH - h + 20;
+              return (
+                <g key={i}>
+                  <rect x={x} y={y} width={bw} height={h} rx="4" fill={item.color} fillOpacity="0.85"/>
+                  <text x={x+bw/2} y={y-5} textAnchor="middle" fill={item.color} fontSize="10" fontFamily="monospace">
+                    {item.type==="neg"?"△":""}{fmt(item.v,true)}
+                  </text>
+                  <text x={x+bw/2} y={152} textAnchor="middle" fill="rgba(232,240,255,0.4)" fontSize="10">{item.label}</text>
+                </g>
+              );
+            })}
+            <line x1="0" y1="140" x2="420" y2="140" stroke="rgba(148,196,255,0.08)" strokeWidth="1"/>
+          </svg>
         </Card>
+
+        {/* Fixed costs breakdown */}
         <Card>
           <ST>固定費内訳</ST>
-          {fixedItems.map((f,i) => {
-            const v = N(f.金額), p = (v/totalFixed)*100;
-            return (
-              <div key={i} style={{ marginBottom:10 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                  <span style={{ fontSize:12 }}>{f.費目}</span>
-                  <span className="mono" style={{ fontSize:12, color:C.txM }}>{fmt(v,true)}</span>
+          <div style={{ marginTop:4 }}>
+            {fixedItems.slice(0,6).map((f,i) => {
+              const v = N(f.金額), p = totalFixed>0?(v/totalFixed)*100:0;
+              return (
+                <div key={i} style={{ marginBottom:8 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
+                    <span style={{ fontSize:11, color:C.txM }}>{f.費目}</span>
+                    <span className="mono" style={{ fontSize:11, color:colors[i%colors.length] }}>{fmt(v,true)}</span>
+                  </div>
+                  <div style={{ background:C.bgLL, borderRadius:3, height:4, overflow:"hidden" }}>
+                    <div style={{ width:`${Math.min(p,100)}%`, height:"100%", background:colors[i%colors.length], borderRadius:3, transition:"width .6s ease" }}/>
+                  </div>
                 </div>
-                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                  <MBar p={p} color={colors[i%colors.length]}/>
-                  <span style={{ fontSize:10, color:C.txD, minWidth:28 }}>{Math.round(p)}%</span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </Card>
       </div>
+
+      {/* Product summary mini table */}
+      {products.length > 0 && (
+        <Card style={{ marginBottom:10 }}>
+          <ST>品目別サマリー</ST>
+          <div style={{ overflowX:"auto" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12, minWidth:400 }}>
+              <thead><tr>
+                {["品目名","売上高","限界利益率","貢献利益","判定"].map(h=>(
+                  <th key={h} style={{ padding:"7px 10px", textAlign:h==="品目名"?"left":"right", fontSize:10, color:C.txD, borderBottom:`1px solid ${C.b}`, fontWeight:500 }}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {products.map((p,i)=>(
+                  <tr key={i} style={{ borderBottom:`1px solid ${C.b}` }}>
+                    <td style={{ padding:"7px 10px", fontWeight:500 }}>{p.name}</td>
+                    <td className="mono" style={{ padding:"7px 10px", textAlign:"right", color:C.txM }}>{fmt(p.rev,true)}</td>
+                    <td style={{ padding:"7px 10px", textAlign:"right" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"flex-end" }}>
+                        <div style={{ width:50, background:C.bgLL, borderRadius:2, height:4, overflow:"hidden" }}>
+                          <div style={{ width:`${Math.min(p.cmRate,100)}%`, height:"100%", background:p.cmRate>=40?C.teal:p.cmRate>=25?C.amber:C.red }}/>
+                        </div>
+                        <span className="mono" style={{ color:p.cmRate>=40?C.teal:p.cmRate>=25?C.amber:C.red }}>{pct(p.cmRate)}</span>
+                      </div>
+                    </td>
+                    <td className="mono" style={{ padding:"7px 10px", textAlign:"right", color:p.contrib>=0?C.teal:C.red }}>{fmt(p.contrib,true)}</td>
+                    <td style={{ padding:"7px 10px", textAlign:"right" }}>
+                      <span style={{ background:p.status==="優良"?C.tD:p.status==="要注意"?C.aD:C.rD, color:p.status==="優良"?C.teal:p.status==="要注意"?C.amber:C.red, fontSize:10, padding:"2px 8px", borderRadius:20, fontWeight:500 }}>{p.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Alerts */}
       {products.filter(p => p.status!=="優良").length > 0 && (
-        <div style={{ marginTop:12, display:"flex", flexDirection:"column", gap:7 }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
           {products.filter(p => p.status!=="優良").map((p,i) => (
             <Alert key={i} color={p.status==="要注意"?C.amber:C.red}
               text={`${p.name}：限界利益率 ${pct(p.cmRate)}（${p.status}）— 貢献利益 ${fmt(p.contrib)}`}/>
