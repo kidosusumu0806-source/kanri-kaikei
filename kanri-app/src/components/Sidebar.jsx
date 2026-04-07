@@ -1,4 +1,5 @@
 // src/components/Sidebar.jsx
+import { useState } from "react";
 import { C } from "../tokens.js";
 import { Btn } from "./Atoms.jsx";
 import * as XLSX from "xlsx";
@@ -20,6 +21,7 @@ const NAV = [
 ];
 
 export default function Sidebar({ tab, setTab, loc, setLoc, period, setPeriod, locations, setLocations, user, onLogout, computed, onExcel, savedMsg }) {
+  const [collapsed, setCollapsed] = useState(false);
   const allPeriods = Object.keys(locations[loc] || {});
 
   const addLocation = () => {
@@ -37,19 +39,24 @@ export default function Sidebar({ tab, setTab, loc, setLoc, period, setPeriod, l
   };
 
   return (
-    <div className="no-print" style={{ width:220, flexShrink:0, background:C.bgM, borderRight:`1px solid ${C.b}`, display:"flex", flexDirection:"column", padding:"1rem .9rem", minHeight:"100vh", position:"sticky", top:0, maxHeight:"100vh", overflowY:"auto" }}>
-      {/* Logo */}
-      <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:"1.4rem", paddingBottom:"1rem", borderBottom:`1px solid ${C.b}` }}>
-        <div style={{ width:30, height:30, background:C.teal, borderRadius:7, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, flexShrink:0 }}>⚡</div>
-        <div>
-          <div style={{ fontSize:13, fontWeight:500 }}>管理会計</div>
-          <div style={{ fontSize:10, color:C.txD }}>{user?.split("@")[0]}</div>
+    <div className="no-print" style={{ width:collapsed?52:220, flexShrink:0, background:C.bgM, borderRight:`1px solid ${C.b}`, display:"flex", flexDirection:"column", padding:collapsed?"1rem .4rem":"1rem .9rem", minHeight:"100vh", position:"sticky", top:0, maxHeight:"100vh", overflowY:"auto", transition:"width .2s ease", overflow:"hidden" }}>
+      {/* Logo + collapse button */}
+      <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:"1.4rem", paddingBottom:"1rem", borderBottom:`1px solid ${C.b}`, justifyContent:"space-between" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:9, overflow:"hidden" }}>
+          <div style={{ width:30, height:30, background:C.teal, borderRadius:7, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, flexShrink:0 }}>⚡</div>
+          {!collapsed && <div>
+            <div style={{ fontSize:13, fontWeight:500, whiteSpace:"nowrap" }}>管理会計</div>
+            <div style={{ fontSize:10, color:C.txD, whiteSpace:"nowrap" }}>{user?.split("@")[0]}</div>
+          </div>}
         </div>
+        <button onClick={() => setCollapsed(p => !p)} style={{ background:"none", border:"none", cursor:"pointer", color:C.txD, fontSize:16, padding:2, flexShrink:0, lineHeight:1 }}>
+          {collapsed ? "»" : "«"}
+        </button>
       </div>
 
       {/* Locations */}
       <div style={{ marginBottom:"1.2rem" }}>
-        <div style={{ fontSize:9, color:C.txD, letterSpacing:"0.07em", marginBottom:6, textTransform:"uppercase" }}>拠点・事業部</div>
+        {!collapsed && <div style={{ fontSize:9, color:C.txD, letterSpacing:"0.07em", marginBottom:6, textTransform:"uppercase" }}>拠点・事業部</div>}
         {Object.keys(locations).map(l => (
           <button key={l} onClick={() => setLoc(l)} style={{
             width:"100%", textAlign:"left", padding:"6px 9px", borderRadius:7, fontSize:12, cursor:"pointer", marginBottom:2,
@@ -62,7 +69,7 @@ export default function Sidebar({ tab, setTab, loc, setLoc, period, setPeriod, l
 
       {/* Periods */}
       <div style={{ marginBottom:"1.2rem" }}>
-        <div style={{ fontSize:9, color:C.txD, letterSpacing:"0.07em", marginBottom:6, textTransform:"uppercase" }}>対象期間</div>
+        {!collapsed && <div style={{ fontSize:9, color:C.txD, letterSpacing:"0.07em", marginBottom:6, textTransform:"uppercase" }}>対象期間</div>}
         {allPeriods.map(p => (
           <button key={p} onClick={() => setPeriod(p)} style={{
             width:"100%", textAlign:"left", padding:"6px 9px", borderRadius:7, fontSize:12, cursor:"pointer", marginBottom:2,
@@ -75,18 +82,18 @@ export default function Sidebar({ tab, setTab, loc, setLoc, period, setPeriod, l
 
       {/* Nav */}
       <nav style={{ flex:1 }}>
-        <div style={{ fontSize:9, color:C.txD, letterSpacing:"0.07em", marginBottom:6, textTransform:"uppercase" }}>メニュー</div>
+        {!collapsed && <div style={{ fontSize:9, color:C.txD, letterSpacing:"0.07em", marginBottom:6, textTransform:"uppercase" }}>メニュー</div>}
         {NAV.map(n => (
-          <button key={n.id} onClick={() => setTab(n.id)} style={{
+          <button key={n.id} onClick={() => setTab(n.id)} title={collapsed ? n.label : ""} style={{
             width:"100%", textAlign:"left", padding:"7px 9px", borderRadius:7, fontSize:12, cursor:"pointer",
-            display:"flex", alignItems:"center", gap:7, marginBottom:2,
+            display:"flex", alignItems:"center", gap:7, marginBottom:2, justifyContent:collapsed?"center":"flex-start",
             background: tab===n.id ? C.bgLL : "transparent",
             color: tab===n.id ? C.tx : C.txM,
             border: `1px solid ${tab===n.id ? C.bM : "transparent"}`,
           }}>
-            <span style={{ fontSize:13 }}>{n.icon}</span>
-            <span style={{ flex:1 }}>{n.label}</span>
-            {n.id==="ai" && <span style={{ fontSize:9, background:C.tD, color:C.teal, padding:"1px 5px", borderRadius:3 }}>AI</span>}
+            <span style={{ fontSize:collapsed?18:13 }}>{n.icon}</span>
+            {!collapsed && <span style={{ flex:1 }}>{n.label}</span>}
+            {!collapsed && n.id==="ai" && <span style={{ fontSize:9, background:C.tD, color:C.teal, padding:"1px 5px", borderRadius:3 }}>AI</span>}
           </button>
         ))}
       </nav>
