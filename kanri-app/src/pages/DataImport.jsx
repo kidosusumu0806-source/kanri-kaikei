@@ -215,14 +215,15 @@ export default function DataImport({ periodData, onUpdate, onCompute, onJournalA
 
   const handleReceiptExtracted = (results) => {
     // 仕訳帳に追加
-    const newEntries = results.map(r => ({
-      id: uid(), date: r.date,
-      debit: r.category || "その他費用", credit:"現金",
-      amount: r.amount, description:`${r.vendor} ${r.content}`, ref: r.file,
-    }));
-    onJournalAdd(newEntries);
-
-    // 費目リスト（costs）にも追加してPL・採算に反映
+    if (onJournalAdd && results.length > 0) {
+      const newEntries = results.map(r => ({
+        id: uid(), date: r.date,
+        debit: r.category || "その他費用", credit: "現金",
+        amount: r.amount, description: `${r.vendor} ${r.content}`, ref: r.file,
+      }));
+      onJournalAdd(newEntries);
+    }
+    // 費目分類設定にも追加
     if (onCostsUpdate && results.length > 0) {
       const currentCosts = periodData?.costs || [];
       const newCostItems = results

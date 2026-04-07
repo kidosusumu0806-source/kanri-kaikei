@@ -263,7 +263,18 @@ const TYPE_META = {
   準変動費:{ color:C.amber, bg:C.aD,  border:C.aB,  icon:"〜" },
 };
 
-export function CostClassifier({ costs, onChange }) {
+export function CostClassifier({ costs, onChange, journals }) {
+  const [monthFilter, setMonthFilter] = useState("all");
+
+  // 仕訳帳から月一覧を生成
+  const journalMonths = ["all", ...Array.from(new Set((journals||[]).map(e => e.date?.slice(0,7)).filter(Boolean))).sort().reverse()];
+
+  // 月でフィルターされたOCR費目のみ表示（_fromOCRのみ対象）
+  const visibleCosts = costs.filter(c => {
+    if (!c._fromOCR) return true; // 手入力は常に表示
+    if (monthFilter === "all") return true;
+    return c._date?.startsWith(monthFilter);
+  });
   const [rawCSV, setRawCSV] = useState(`費目,金額\n人件費（管理）,7200000\n減価償却費,2100000\n地代家賃,1800000\n水道光熱費,950000\n消耗品費,420000\n旅費交通費,280000\nその他,380000`);
   const [aiLoading, setAiLoading] = useState(false);
   const [log, setLog] = useState("");
@@ -372,16 +383,39 @@ export function CostClassifier({ costs, onChange }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // JOURNAL
 // ═══════════════════════════════════════════════════════════════════════════
-export function Journal({ entries, setEntries }) {
+export function Journal({ entries, setEntries, onSyncToCosts, currentCosts }) {
   const [form, setForm] = useState({ date:today(), debit:"", credit:"", amount:"", description:"" });
   const [editId, setEditId] = useState(null);
   const [editRow, setEditRow] = useState({});
   const [search, setSearch] = useState("");
+  const [monthFilter, setMonthFilter] = useState("all");
+
+  // 月一覧を仕訳帳から生成
+  const months = ["all", ...Array.from(new Set(entries.map(e => e.date?.slice(0,7)).filter(Boolean))).sort().reverse()];
 
   const add = () => {
     if (!form.debit || !form.credit || !form.amount) return;
     setEntries(p => [{ id:uid(), ...form, amount:N(form.amount) }, ...p]);
     setForm(f => ({ ...f, debit:"", credit:"", amount:"", description:"" }));
+  };
+
+  // 仕訳帳の合計を費目分類設定に反映
+  const syncToCosts = () => {
+    const targetEntries = monthFilter === "all" ? entries : entries.filter(e => e.date?.startsWith(monthFilter));
+    // 借方科目ごとに合算
+    const grouped = {};
+    targetEntries.forEach(e => {
+      if (!e.debit || !e.amount) return;
+      grouped[e.debit] = (grouped[e.debit] || 0) + N(e.amount);
+    });
+    const newItems = Object.entries(grouped).map(([費目, 金額]) => ({
+      費目, 金額: String(Math.round(金額)), _type: "固定費", 固定率: 100,
+    }));
+    if (!newItems.length) { alert("集計できる仕訳がありません"); return; }
+    const label = monthFilter === "all" ? "全期間" : monthFilter;
+    if (!window.confirm(`${label}の仕訳を勘定科目ごとに集計して費目分類設定に追加します。\n\n${newItems.map(r => `${r.費目}: ¥${Number(r.金額).toLocaleString()}`).join("\n")}\n\n既存の費目に追加されます。よろしいですか？`)) return;
+    onSyncToCosts && onSyncToCosts([...(currentCosts||[]), ...newItems]);
+    alert("費目分類設定に反映しました。「採算計算を実行する」ボタンで採算に反映されます。");
   };
 
   const startEdit = (e) => {
@@ -412,9 +446,14 @@ export function Journal({ entries, setEntries }) {
     </select>
   );
 
-  const filtered = entries.filter(e =>
-    !search || [e.date, e.debit, e.credit, e.description].some(v => v?.includes(search))
-  );
+  const filtered = entries.filter(e => {
+    if (monthFilter !== "all" && !e.date?.startsWith(monthFilter)) return false;
+    if (search && ![e.date, e.debit, e.credit, e.description].some(v => v?.includes(search))) return false;
+    return true;
+  });
+
+  // 月別集計
+  const monthTotal = filtered.reduce((a, e) => a + N(e.amount), 0);
 
   return (
     <div className="fade">
@@ -432,12 +471,22 @@ export function Journal({ entries, setEntries }) {
         </div>
       </Card>
       <Card>
-        <ST right={
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="検索..." style={{ background:C.bgL, border:`1px solid ${C.bM}`, borderRadius:6, padding:"4px 8px", fontSize:12, color:C.tx, outline:"none", width:120 }}/>
-            <span className="mono" style={{ fontSize:11, color:C.txD }}>{filtered.length}件</span>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10, flexWrap:"wrap", gap:8 }}>
+          <div style={{ fontSize:13, fontWeight:500 }}>仕訳帳 <span style={{ fontSize:11, color:C.txD, fontWeight:400 }}>（行をクリックで編集）</span></div>
+          <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+            <select value={monthFilter} onChange={e=>setMonthFilter(e.target.value)}
+              style={{ background:C.bgL, border:`1px solid ${C.bM}`, borderRadius:6, padding:"4px 8px", fontSize:12, color:C.tx, outline:"none" }}>
+              {months.map(m => <option key={m} value={m}>{m==="all"?"全期間":m}</option>)}
+            </select>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="検索..." style={{ background:C.bgL, border:`1px solid ${C.bM}`, borderRadius:6, padding:"4px 8px", fontSize:12, color:C.tx, outline:"none", width:110 }}/>
+            <span className="mono" style={{ fontSize:11, color:C.txD }}>{filtered.length}件 / 合計 {fmt(monthTotal)}</span>
+            {onSyncToCosts && (
+              <button onClick={syncToCosts} style={{ background:C.teal, color:"#0B1628", border:"none", borderRadius:6, padding:"5px 12px", fontSize:11, fontWeight:700, cursor:"pointer" }}>
+                費目分類設定に集計を反映
+              </button>
+            )}
           </div>
-        }>仕訳帳 <span style={{ fontSize:11, color:C.txD, fontWeight:400 }}>（行をクリックで編集）</span></ST>
+        </div>
         <div style={{ overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12, minWidth:580 }}>
             <thead><tr>{["日付","借方","貸方","金額","摘要",""].map(h=>(

@@ -324,6 +324,20 @@ export default function AppSupabase() {
             <CostClassifier
               costs={periodData.costs || DEF_COSTS}
               onChange={costs => updatePeriodField("costs", costs)}
+              journals={store.journals}
+            />
+          )}
+
+          {tab==="journal" && (
+            <Journal
+              entries={store.journals}
+              setEntries={async (updater) => {
+                const updated = updater(store.journals);
+                const removed = store.journals.filter(e => !updated.find(u => u.id === e.id));
+                await Promise.all(removed.map(e => store.deleteJournalEntry(e.id)));
+              }}
+              onSyncToCosts={(costs) => updatePeriodField("costs", costs)}
+              currentCosts={periodData.costs || DEF_COSTS}
             />
           )}
 
@@ -390,7 +404,7 @@ export default function AppSupabase() {
           {tab==="ai" && (
             <AIAdvisor
               computed={computed}
-              journals={store.journals}
+              
               period={currentPeriodLabel}
               loc={currentLocName}
             />
