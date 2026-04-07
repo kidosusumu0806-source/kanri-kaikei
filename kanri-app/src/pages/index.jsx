@@ -11,8 +11,6 @@ import AIChat from "../components/AIChat.jsx";
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════
 export function Dashboard({ computed, prevComputed }) {
-  const downloadPDF = () => window.print();
-
   if (!computed) return (
     <div className="fade" style={{ textAlign:"center", padding:"5rem 2rem", color:C.txD }}>
       <div style={{ fontSize:56, marginBottom:16, opacity:0.4 }}>📊</div>
@@ -42,13 +40,6 @@ export function Dashboard({ computed, prevComputed }) {
 
   return (
     <div className="fade">
-      {/* PDF download button */}
-      <div className="no-print" style={{ display:"flex", justifyContent:"flex-end", marginBottom:10 }}>
-        <button onClick={downloadPDF} style={{ background:"transparent", border:`1px solid ${C.bM}`, color:C.txM, borderRadius:7, padding:"6px 14px", fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-          🖨 PDFダウンロード
-        </button>
-      </div>
-
       {/* KPI Cards - enhanced */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:12 }}>
         {/* 売上高 */}
