@@ -14,14 +14,38 @@ export const uid = () => Math.random().toString(36).slice(2, 8);
 export const today = () => new Date().toISOString().slice(0, 10);
 export const sg = n => (n >= 0 ? "+" : "");
 
+// CSVの1行をクォート対応でパース（"値,の中のカンマ" に対応）
+function parseCSVLine(line) {
+  const result = [];
+  let cur = "", inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (ch === "," && !inQ) {
+      result.push(cur.trim()); cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
 export function parseCSV(text) {
-  const lines = text.trim().split("\n").filter(Boolean);
+  // 改行コードを統一（\r\n → \n）
+  const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = normalized.trim().split("\n").filter(Boolean);
   if (lines.length < 2) return [];
-  const hs = lines[0].split(",").map(h => h.trim());
+  const hs = parseCSVLine(lines[0]);
   return lines.slice(1).map(l => {
-    const vs = l.split(",").map(v => v.trim());
+    const vs = parseCSVLine(l);
     const o = {};
-    hs.forEach((h, i) => (o[h] = vs[i] ?? ""));
+    hs.forEach((h, i) => {
+      // 数値文字列のカンマ除去（¥1,000 → 1000）
+      o[h] = (vs[i] ?? "").replace(/^[¥￥]/, "").replace(/,/g, "").trim();
+    });
     return o;
   });
 }
@@ -91,7 +115,7 @@ export async function callClaude({ system, messages, max_tokens = 1000 }) {
   const res = await fetch("/api/claude", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens, system, messages }),
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens, system, messages }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "API error");

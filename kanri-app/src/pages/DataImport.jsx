@@ -8,7 +8,21 @@ import { Card, ST, Btn, Badge } from "../components/Atoms.jsx";
 // ─── CSV Upload Zone ──────────────────────────────────────────────────────────
 function CSVZone({ label, hint, value, onChange, sampleValue }) {
   const ref = useRef();
-  const onFile = f => { const r = new FileReader(); r.onload = e => onChange(e.target.result); r.readAsText(f, "UTF-8"); };
+  const onFile = f => {
+    const r = new FileReader();
+    r.onload = e => {
+      let text = e.target.result;
+      // Shift-JISで文字化けしているか判定（弥生・freeeなど）
+      if (text.includes("\uFFFD") || /[\x80-\xFF]/.test(text)) {
+        const r2 = new FileReader();
+        r2.onload = e2 => onChange(e2.target.result);
+        r2.readAsText(f, "Shift_JIS");
+        return;
+      }
+      onChange(text);
+    };
+    r.readAsText(f, "UTF-8");
+  };
   return (
     <Card>
       <ST>{label}</ST>
@@ -126,14 +140,15 @@ function ReceiptUploader({ onExtracted }) {
              { type:"text", text:`この領収書・レシートから情報を抽出してください。JSON形式のみで返答：{"日付":"YYYY-MM-DD","取引先":"店舗名","金額":数値,"内容":"品目","費目候補":"勘定科目","消費税":数値}` }];
         const res = await fetch("/api/claude", {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:400, messages:[{ role:"user", content }] }),
+          body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:400, messages:[{ role:"user", content }] }),
         });
         const data = await res.json();
         const txt = data.content?.map(c => c.text||"").join("").replace(/```json|```/g,"").trim();
         const parsed = JSON.parse(txt);
         results.push({ id:uid(), file:f.name, status:"完了", date:parsed.日付||today(), vendor:parsed.取引先||"不明", amount:parsed.金額||0, content:parsed.内容||"", category:parsed.費目候補||"その他", tax:parsed.消費税||0 });
-      } catch {
-        results.push({ id:uid(), file:f.name, status:"エラー", date:today(), vendor:"不明", amount:0, content:"", category:"その他", tax:0 });
+      } catch (e) {
+        console.error("OCR error:", f.name, e);
+        results.push({ id:uid(), file:f.name, status:"エラー", date:today(), vendor:"不明", amount:0, content:String(e?.message||"解析エラー"), category:"その他", tax:0 });
       }
     }
     setFiles(p => [...p, ...results]);
@@ -187,6 +202,14 @@ export default function DataImport({ periodData, onUpdate, onCompute, onJournalA
   const handleBulkImport = (mapped) => {
     if (mapped.sales) onUpdate("salesCSV", mapped.sales);
     if (mapped.budget) onUpdate("budgetCSV", mapped.budget);
+    if (mapped.costs) {
+      // 費用CSVをパースして費目リストに変換
+      const rows = mapped.costs.trim().split("\n").slice(1).filter(Boolean).map(l => {
+        const [費目, 金額] = l.split(",").map(s => s.trim());
+        return { 費目: 費目 || "", 金額: 金額 || "0", _type: "固定費", 固定率: 100 };
+      }).filter(r => r.費目);
+      if (rows.length) onUpdate("costs", rows);
+    }
     alert(`取込完了。${Object.keys(mapped).join("・")}を更新しました。「計算実行」ボタンで採算を更新してください。`);
   };
 
