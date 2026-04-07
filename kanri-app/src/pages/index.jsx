@@ -391,17 +391,30 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
   const [csvOpen, setCsvOpen] = useState(false);
   const [monthFilter, setMonthFilter] = useState("all");
 
-  // ローカルstateで編集を管理（index-based、シンプルで確実）
+  // ローカルstateで即時反映（非同期のonChangeを待たない）
+  const [localCosts, setLocalCosts] = useState(costs);
+  // costsプロップが期間切替などで外から変わったときだけ同期
+  const costsKey = costs.length + "_" + (costs[0]?.費目||"");
+  const prevKeyRef = useState(costsKey);
+  if (prevKeyRef[0] !== costsKey) {
+    prevKeyRef[0] = costsKey;
+    setTimeout(() => setLocalCosts(costs), 0);
+  }
+
   const upd = (i, field, val) => {
-    const next = costs.map((c, j) => j === i ? { ...c, [field]: val } : c);
+    const next = localCosts.map((c, j) => j === i ? { ...c, [field]: val } : c);
+    setLocalCosts(next);
     onChange(next);
   };
-  const del = (i) => onChange(costs.filter((_, j) => j !== i));
+  const del = (i) => {
+    const next = localCosts.filter((_, j) => j !== i);
+    setLocalCosts(next);
+    onChange(next);
+  };
 
   // OCRフィルター（仕訳帳月別）
   const journalMonths = ["all", ...Array.from(new Set((journals||[]).map(e => e.date?.slice(0,7)).filter(Boolean))).sort().reverse()];
-  // 表示する行（index付き）
-  const visibleWithIdx = costs
+  const visibleWithIdx = localCosts
     .map((c, i) => ({ c, i }))
     .filter(({ c }) => {
       if (!c._fromOCR) return true;
@@ -438,13 +451,13 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
         messages:[{ role:"user", content:`以下の費目を分類:\n${costs.map(c=>c.費目).join("\n")}` }],
       });
       const arr = JSON.parse(txt.replace(/```json|```/g,"").trim());
-      onChange(costs.map(c => { const m=arr.find(a=>a.費目===c.費目); return m?{...c,...m}:c; }));
+      const next = localCosts.map(c => { const m=arr.find(a=>a.費目===c.費目); return m?{...c,...m}:c; }); setLocalCosts(next); onChange(next);
       setLog(`AI判定完了。${arr.length}件を分類しました。`);
     } catch { setLog("AI判定失敗。手動で設定してください。"); }
     setAiLoading(false);
   };
 
-  const totalByType = type => costs.filter(c=>c._type===type).reduce((a,c)=>a+N(c.金額),0);
+  const totalByType = type => localCosts.filter(c=>c._type===type).reduce((a,c)=>a+N(c.金額),0);
 
   return (
     <div className="fade">
@@ -500,7 +513,7 @@ export function CostClassifier({ costs, onChange, journals, currentPeriod, perio
                 {journalMonths.map(m => <option key={m} value={m}>{m==="all"?"全期間OCR":m}</option>)}
               </select>
             )}
-            <Btn sm onClick={()=>onChange([...costs, { 費目:"新規費目", 金額:0, _type:"固定費", 固定率:100 }])}>＋ 追加</Btn>
+            <Btn sm onClick={()=>(() => { const next = [...localCosts, { 費目:"新規費目", 金額:0, _type:"固定費", 固定率:100 }]; setLocalCosts(next); onChange(next); })()}>＋ 追加</Btn>
           </div>
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
