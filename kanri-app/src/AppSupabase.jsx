@@ -341,19 +341,7 @@ export default function AppSupabase() {
             />
           )}
 
-          {tab==="journal" && (
-            <Journal
-              entries={store.journals}
-              setEntries={async (updater) => {
-                if (typeof updater === "function") {
-                  // 削除操作の場合
-                  const updated = updater(store.journals);
-                  const removed = store.journals.filter(e => !updated.find(u => u.id === e.id));
-                  await Promise.all(removed.map(e => store.deleteJournalEntry(e.id)));
-                }
-              }}
-            />
-          )}
+
 
           {tab==="product"   && <ProductPL computed={computed}/>}
           {tab==="budget"    && <BudgetComparison computed={computed}/>}
