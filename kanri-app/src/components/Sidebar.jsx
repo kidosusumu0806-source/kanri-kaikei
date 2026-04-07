@@ -5,7 +5,7 @@ import { Btn } from "./Atoms.jsx";
 import * as XLSX from "xlsx";
 
 const NAV = [
-  { id:"dashboard",  icon:"📊", label:"ダッシュボード" },
+  { id:"dashboard",  icon:"📊", label:"Dashboard" },
   { id:"import",     icon:"📁", label:"データ取込（CSV・領収書）" },
   { id:"costs",      icon:"⚙️", label:"コスト管理" },
   { id:"journal",    icon:"📒", label:"仕訳帳" },
