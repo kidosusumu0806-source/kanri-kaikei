@@ -374,26 +374,56 @@ export function CostClassifier({ costs, onChange }) {
 // ═══════════════════════════════════════════════════════════════════════════
 export function Journal({ entries, setEntries }) {
   const [form, setForm] = useState({ date:today(), debit:"", credit:"", amount:"", description:"" });
+  const [editId, setEditId] = useState(null);
+  const [editRow, setEditRow] = useState({});
+  const [search, setSearch] = useState("");
+
   const add = () => {
     if (!form.debit || !form.credit || !form.amount) return;
     setEntries(p => [{ id:uid(), ...form, amount:N(form.amount) }, ...p]);
     setForm(f => ({ ...f, debit:"", credit:"", amount:"", description:"" }));
   };
-  const Sel = ({ field }) => (
+
+  const startEdit = (e) => {
+    setEditId(e.id);
+    setEditRow({ ...e, amount: String(e.amount) });
+  };
+
+  const saveEdit = () => {
+    setEntries(p => p.map(e => e.id === editId ? { ...editRow, amount: N(editRow.amount) } : e));
+    setEditId(null);
+  };
+
+  const cancelEdit = () => setEditId(null);
+
+  const AccountSel = ({ value, onChange }) => (
+    <select value={value} onChange={e=>onChange(e.target.value)}
+      style={{ width:"100%", background:C.bgL, border:`1px solid ${C.tB}`, borderRadius:5, padding:"4px 6px", fontSize:12, color:C.tx, outline:"none" }}>
+      <option value="">科目選択...</option>
+      {ACCOUNTS.map(a=><option key={a}>{a}</option>)}
+    </select>
+  );
+
+  const FormSel = ({ field }) => (
     <select value={form[field]} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))}
       style={{ width:"100%", background:C.bgL, border:`1px solid ${C.bM}`, borderRadius:7, padding:"7px 10px", fontSize:13, color:C.tx, outline:"none" }}>
       <option value="">科目選択...</option>
       {ACCOUNTS.map(a=><option key={a}>{a}</option>)}
     </select>
   );
+
+  const filtered = entries.filter(e =>
+    !search || [e.date, e.debit, e.credit, e.description].some(v => v?.includes(search))
+  );
+
   return (
     <div className="fade">
       <Card style={{ marginBottom:12 }}>
         <ST>仕訳入力</ST>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:10 }}>
           <div><div style={{ fontSize:11, color:C.txD, marginBottom:4 }}>日付</div><Input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
-          <div><div style={{ fontSize:11, color:C.txD, marginBottom:4 }}>借方</div><Sel field="debit"/></div>
-          <div><div style={{ fontSize:11, color:C.txD, marginBottom:4 }}>貸方</div><Sel field="credit"/></div>
+          <div><div style={{ fontSize:11, color:C.txD, marginBottom:4 }}>借方</div><FormSel field="debit"/></div>
+          <div><div style={{ fontSize:11, color:C.txD, marginBottom:4 }}>貸方</div><FormSel field="credit"/></div>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr 1fr", gap:10 }}>
           <div><div style={{ fontSize:11, color:C.txD, marginBottom:4 }}>金額</div><Input value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} placeholder="0"/></div>
@@ -402,24 +432,54 @@ export function Journal({ entries, setEntries }) {
         </div>
       </Card>
       <Card>
-        <ST right={<span className="mono" style={{ fontSize:11, color:C.txD }}>{entries.length}件</span>}>仕訳帳</ST>
+        <ST right={
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="検索..." style={{ background:C.bgL, border:`1px solid ${C.bM}`, borderRadius:6, padding:"4px 8px", fontSize:12, color:C.tx, outline:"none", width:120 }}/>
+            <span className="mono" style={{ fontSize:11, color:C.txD }}>{filtered.length}件</span>
+          </div>
+        }>仕訳帳 <span style={{ fontSize:11, color:C.txD, fontWeight:400 }}>（行をクリックで編集）</span></ST>
         <div style={{ overflowX:"auto" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12, minWidth:480 }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12, minWidth:580 }}>
             <thead><tr>{["日付","借方","貸方","金額","摘要",""].map(h=>(
               <th key={h} style={{ padding:"7px 10px", textAlign:h==="金額"?"right":"left", fontSize:10, color:C.txD, borderBottom:`1px solid ${C.b}`, fontWeight:500 }}>{h}</th>
             ))}</tr></thead>
             <tbody>
-              {entries.slice(0,100).map(e => (
-                <tr key={e.id} className="hr" style={{ borderBottom:`1px solid ${C.b}` }}>
+              {filtered.slice(0,200).map(e => editId === e.id ? (
+                <tr key={e.id} style={{ background:C.bgLL, borderBottom:`1px solid ${C.tB}` }}>
+                  <td style={{ padding:"6px 8px" }}>
+                    <input type="date" value={editRow.date} onChange={ev=>setEditRow(r=>({...r,date:ev.target.value}))}
+                      style={{ background:C.bgL, border:`1px solid ${C.tB}`, borderRadius:5, padding:"4px 6px", fontSize:12, color:C.tx, outline:"none", width:"100%" }}/>
+                  </td>
+                  <td style={{ padding:"6px 8px" }}>
+                    <AccountSel value={editRow.debit} onChange={v=>setEditRow(r=>({...r,debit:v}))}/>
+                  </td>
+                  <td style={{ padding:"6px 8px" }}>
+                    <AccountSel value={editRow.credit} onChange={v=>setEditRow(r=>({...r,credit:v}))}/>
+                  </td>
+                  <td style={{ padding:"6px 8px" }}>
+                    <input value={editRow.amount} onChange={ev=>setEditRow(r=>({...r,amount:ev.target.value}))}
+                      style={{ background:C.bgL, border:`1px solid ${C.tB}`, borderRadius:5, padding:"4px 6px", fontSize:12, color:C.tx, outline:"none", width:"100%", textAlign:"right", fontFamily:"monospace" }}/>
+                  </td>
+                  <td style={{ padding:"6px 8px" }}>
+                    <input value={editRow.description} onChange={ev=>setEditRow(r=>({...r,description:ev.target.value}))}
+                      style={{ background:C.bgL, border:`1px solid ${C.tB}`, borderRadius:5, padding:"4px 6px", fontSize:12, color:C.tx, outline:"none", width:"100%" }}/>
+                  </td>
+                  <td style={{ padding:"6px 8px", whiteSpace:"nowrap" }}>
+                    <button onClick={saveEdit} style={{ background:C.teal, border:"none", color:"#0B1628", borderRadius:5, padding:"4px 10px", fontSize:11, fontWeight:700, cursor:"pointer", marginRight:4 }}>保存</button>
+                    <button onClick={cancelEdit} style={{ background:"none", border:`1px solid ${C.bM}`, color:C.txM, borderRadius:5, padding:"4px 8px", fontSize:11, cursor:"pointer" }}>取消</button>
+                  </td>
+                </tr>
+              ) : (
+                <tr key={e.id} onClick={()=>startEdit(e)} className="hr" style={{ borderBottom:`1px solid ${C.b}`, cursor:"pointer" }}>
                   <td style={{ padding:"8px 10px", color:C.txM }}>{e.date}</td>
                   <td style={{ padding:"8px 10px" }}>{e.debit}</td>
                   <td style={{ padding:"8px 10px", color:C.txM }}>{e.credit}</td>
                   <td className="mono" style={{ padding:"8px 10px", textAlign:"right" }}>{fmt(e.amount)}</td>
-                  <td style={{ padding:"8px 10px", color:C.txM, maxWidth:180, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{e.description}</td>
-                  <td><button onClick={()=>setEntries(p=>p.filter(x=>x.id!==e.id))} style={{ background:"none", border:"none", color:C.txD, cursor:"pointer", fontSize:12 }}>✕</button></td>
+                  <td style={{ padding:"8px 10px", color:C.txM, maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{e.description}</td>
+                  <td><button onClick={ev=>{ev.stopPropagation();setEntries(p=>p.filter(x=>x.id!==e.id))}} style={{ background:"none", border:"none", color:C.txD, cursor:"pointer", fontSize:12 }}>✕</button></td>
                 </tr>
               ))}
-              {!entries.length && <tr><td colSpan={6} style={{ padding:"2rem", textAlign:"center", color:C.txD, fontSize:12 }}>仕訳がありません</td></tr>}
+              {!filtered.length && <tr><td colSpan={6} style={{ padding:"2rem", textAlign:"center", color:C.txD, fontSize:12 }}>{search?"検索結果がありません":"仕訳がありません"}</td></tr>}
             </tbody>
           </table>
         </div>
