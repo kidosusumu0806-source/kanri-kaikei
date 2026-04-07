@@ -7,7 +7,7 @@ import * as XLSX from "xlsx";
 const NAV = [
   { id:"dashboard",  icon:"📊", label:"ダッシュボード" },
   { id:"import",     icon:"📁", label:"データ取込（CSV・領収書）" },
-  { id:"costs",      icon:"⚙️", label:"費目分類設定" },
+  { id:"costs",      icon:"⚙️", label:"コスト管理" },
   { id:"journal",    icon:"📒", label:"仕訳帳" },
   { id:"product",    icon:"🏭", label:"製品別採算" },
   { id:"budget",     icon:"🎯", label:"予算対比" },

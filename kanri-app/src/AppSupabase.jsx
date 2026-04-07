@@ -19,7 +19,7 @@ import {
 } from "./pages/index.jsx";
 
 const TAB_LABELS = {
-  dashboard:"ダッシュボード", import:"データ取込（CSV・領収書）", costs:"費目分類設定",
+  dashboard:"ダッシュボード", import:"データ取込（CSV・領収書）", costs:"コスト管理",
   journal:"仕訳帳", product:"製品別採算", budget:"予算対比", trend:"トレンド",
   pl:"損益計算書（PL）", bs:"貸借対照表（BS）", cf:"CF計算書",
   monthly:"月次比較レポート", tax:"税務サマリー", ai:"AI財務アドバイザー",
@@ -325,6 +325,13 @@ export default function AppSupabase() {
               costs={periodData.costs || DEF_COSTS}
               onChange={costs => updatePeriodField("costs", costs)}
               journals={store.journals}
+              currentPeriod={currentPeriodLabel}
+              periods={(store.periodMap[currentLocId] || []).map(p => p.label)}
+              onPeriodChange={(label) => {
+                const periods = store.periodMap[currentLocId] || [];
+                const p = periods.find(x => x.label === label);
+                if (p) handlePeriodChange(p.id);
+              }}
             />
           )}
 

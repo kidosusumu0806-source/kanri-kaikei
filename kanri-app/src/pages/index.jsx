@@ -263,15 +263,14 @@ const TYPE_META = {
   準変動費:{ color:C.amber, bg:C.aD,  border:C.aB,  icon:"〜" },
 };
 
-export function CostClassifier({ costs, onChange, journals }) {
-  const [monthFilter, setMonthFilter] = useState("all");
+export function CostClassifier({ costs, onChange, journals, currentPeriod, periods, onPeriodChange }) {
+  const [csvOpen, setCsvOpen] = useState(false);
 
-  // 仕訳帳から月一覧を生成
+  // OCRフィルター（仕訳帳月別）
   const journalMonths = ["all", ...Array.from(new Set((journals||[]).map(e => e.date?.slice(0,7)).filter(Boolean))).sort().reverse()];
-
-  // 月でフィルターされたOCR費目のみ表示（_fromOCRのみ対象）
+  const [monthFilter, setMonthFilter] = useState("all");
   const visibleCosts = costs.filter(c => {
-    if (!c._fromOCR) return true; // 手入力は常に表示
+    if (!c._fromOCR) return true;
     if (monthFilter === "all") return true;
     return c._date?.startsWith(monthFilter);
   });
@@ -330,21 +329,51 @@ export function CostClassifier({ costs, onChange, journals }) {
         ))}
       </div>
 
-      {/* CSV Import */}
+      {/* CSV Import - 折りたたみ式 */}
       <Card style={{ marginBottom:12 }}>
-        <ST right={<><Btn sm onClick={importCSV}>取込・自動判定</Btn><Btn sm onClick={runAI} disabled={aiLoading}>⚡ {aiLoading?"分析中...":"AI再判定"}</Btn></>}>費用CSV取込</ST>
-        <textarea value={rawCSV} onChange={e=>setRawCSV(e.target.value)}
-          style={{ width:"100%", height:90, background:C.bgL, border:`1px solid ${C.b}`, borderRadius:7, padding:"8px 10px", fontSize:11, color:C.txM, outline:"none", fontFamily:"monospace", lineHeight:1.6, marginBottom:8 }}/>
-        {log && <div style={{ fontSize:11, color:C.teal }}>{log}</div>}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }} onClick={()=>setCsvOpen(p=>!p)}>
+          <span style={{ fontSize:13, fontWeight:500 }}>費用CSV一括取込</span>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:11, color:C.txD }}>弥生・freeeからの一括インポート</span>
+            <span style={{ color:C.txD, fontSize:14 }}>{csvOpen?"▲":"▼"}</span>
+          </div>
+        </div>
+        {csvOpen && (
+          <div style={{ marginTop:12 }}>
+            <textarea value={rawCSV} onChange={e=>setRawCSV(e.target.value)}
+              style={{ width:"100%", height:90, background:C.bgL, border:`1px solid ${C.b}`, borderRadius:7, padding:"8px 10px", fontSize:11, color:C.txM, outline:"none", fontFamily:"monospace", lineHeight:1.6, marginBottom:8 }}/>
+            <div style={{ display:"flex", gap:8 }}>
+              <Btn sm onClick={importCSV}>取込・自動判定</Btn>
+              <Btn sm onClick={runAI} disabled={aiLoading}>⚡ {aiLoading?"分析中...":"AI再判定"}</Btn>
+            </div>
+            {log && <div style={{ fontSize:11, color:C.teal, marginTop:6 }}>{log}</div>}
+          </div>
+        )}
       </Card>
 
       {/* Row editor */}
       <Card>
-        <ST right={<Btn sm onClick={()=>onChange([...costs,{ 費目:"新規費目", 金額:0, _type:"固定費", 固定率:100 }])}>＋ 追加</Btn>}>
-          費目一覧（クリックで種別変更）
-        </ST>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10, flexWrap:"wrap", gap:8 }}>
+          <div style={{ fontSize:13, fontWeight:500 }}>費目一覧</div>
+          <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+            {periods && periods.length > 1 && (
+              <select value={currentPeriod} onChange={e=>onPeriodChange&&onPeriodChange(e.target.value)}
+                style={{ background:C.bgL, border:`1px solid ${C.bM}`, borderRadius:6, padding:"4px 8px", fontSize:12, color:C.tx, outline:"none" }}>
+                {periods.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            )}
+            {journals && journals.length > 0 && journalMonths.length > 1 && (
+              <select value={monthFilter} onChange={e=>setMonthFilter(e.target.value)}
+                style={{ background:C.bgL, border:`1px solid ${C.bM}`, borderRadius:6, padding:"4px 8px", fontSize:12, color:C.tx, outline:"none" }}>
+                {journalMonths.map(m => <option key={m} value={m}>{m==="all"?"全期間OCR":m}</option>)}
+              </select>
+            )}
+            <Btn sm onClick={()=>onChange([...costs,{ 費目:"新規費目", 金額:0, _type:"固定費", 固定率:100 }])}>＋ 追加</Btn>
+          </div>
+        </div>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-          {costs.map((c,i) => {
+          {visibleCosts.map((c) => {
+            const i = costs.indexOf(c);
             const t = TYPE_META[c._type] || TYPE_META["固定費"];
             return (
               <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:C.bgL, borderRadius:8, border:`1px solid ${C.b}` }}>
@@ -370,7 +399,7 @@ export function CostClassifier({ costs, onChange, journals }) {
                     <span className="mono" style={{ fontSize:11, color:C.amber, minWidth:32 }}>{c.固定率??60}%固定</span>
                   </div>
                 )}
-                <button onClick={()=>onChange(costs.filter((_,j)=>j!==i))} style={{ background:"none", border:"none", color:C.txD, cursor:"pointer", fontSize:12, padding:"2px 4px" }}>✕</button>
+                <button onClick={()=>onChange(costs.filter((_,j)=>j!==i))} style={{ background:"none", border:"none", color:C.txD, cursor:"pointer", fontSize:14, padding:"2px 6px" }}>✕</button>
               </div>
             );
           })}
@@ -399,7 +428,7 @@ export function Journal({ entries, setEntries, onSyncToCosts, currentCosts }) {
     setForm(f => ({ ...f, debit:"", credit:"", amount:"", description:"" }));
   };
 
-  // 仕訳帳の合計を費目分類設定に反映
+  // 仕訳帳の合計をコスト管理に反映
   const syncToCosts = () => {
     const targetEntries = monthFilter === "all" ? entries : entries.filter(e => e.date?.startsWith(monthFilter));
     // 借方科目ごとに合算
@@ -413,9 +442,9 @@ export function Journal({ entries, setEntries, onSyncToCosts, currentCosts }) {
     }));
     if (!newItems.length) { alert("集計できる仕訳がありません"); return; }
     const label = monthFilter === "all" ? "全期間" : monthFilter;
-    if (!window.confirm(`${label}の仕訳を勘定科目ごとに集計して費目分類設定に追加します。\n\n${newItems.map(r => `${r.費目}: ¥${Number(r.金額).toLocaleString()}`).join("\n")}\n\n既存の費目に追加されます。よろしいですか？`)) return;
+    if (!window.confirm(`${label}の仕訳を勘定科目ごとに集計してコスト管理に追加します。\n\n${newItems.map(r => `${r.費目}: ¥${Number(r.金額).toLocaleString()}`).join("\n")}\n\n既存の費目に追加されます。よろしいですか？`)) return;
     onSyncToCosts && onSyncToCosts([...(currentCosts||[]), ...newItems]);
-    alert("費目分類設定に反映しました。「採算計算を実行する」ボタンで採算に反映されます。");
+    alert("コスト管理に反映しました。「採算計算を実行する」ボタンで採算に反映されます。");
   };
 
   const startEdit = (e) => {
@@ -482,7 +511,7 @@ export function Journal({ entries, setEntries, onSyncToCosts, currentCosts }) {
             <span className="mono" style={{ fontSize:11, color:C.txD }}>{filtered.length}件 / 合計 {fmt(monthTotal)}</span>
             {onSyncToCosts && (
               <button onClick={syncToCosts} style={{ background:C.teal, color:"#0B1628", border:"none", borderRadius:6, padding:"5px 12px", fontSize:11, fontWeight:700, cursor:"pointer" }}>
-                費目分類設定に集計を反映
+                コスト管理に集計を反映
               </button>
             )}
           </div>
