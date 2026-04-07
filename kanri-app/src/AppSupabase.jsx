@@ -103,13 +103,12 @@ export default function AppSupabase() {
   const pendingUpdates = useRef({});
 
   const updatePeriodField = useCallback((field, value) => {
-    // ローカルキャッシュに即時反映
+    // ローカルキャッシュに即時反映（画面も即時更新）
     pendingUpdates.current[field] = value;
-    // 既存タイマーをリセット
+    store.savePeriodData(currentPeriodId, { [field]: value });
+    // 既存タイマーをリセット（DB保存は1秒デバウンス）
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    // 1秒後にまとめてDB保存
     saveTimer.current = setTimeout(() => {
-      store.savePeriodData(currentPeriodId, { ...pendingUpdates.current });
       pendingUpdates.current = {};
     }, 1000);
   }, [currentPeriodId, store.savePeriodData]);
